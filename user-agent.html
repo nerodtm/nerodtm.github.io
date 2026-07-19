@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- 1. DEFAULT NGINX 500 INTERNAL SERVER ERROR STYLES --- */
+        #nginx-500 {
+            display: block; /* Shown by default to everyone */
+            font-family: Helvetica, Arial, sans-serif;
+            background-color: #fff;
+            color: #000;
+            text-align: center;
+            padding-top: 150px;
+        }
+        #nginx-500 h1 {
+            font-size: 35px;
+            font-weight: normal;
+            line-height: 40px;
+            margin-bottom: 10px;
+        }
+        #nginx-500 p {
+            font-size: 14px;
+        }
+        #nginx-500 hr {
+            max-width: 650px;
+            margin: 20px auto;
+            border: 0;
+            border-top: 1px solid #777;
+        }
+        #nginx-500 .footer {
+            font-size: 14px;
+        }
+
+        /* --- 2. SCOOBY USER-AGENT LOGIN STYLES --- */
+        #scooby-login {
+            display: none; /* Hidden by default */
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 360px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .login-container h2 { color: #ffffff; font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .login-container p { color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; color: rgba(255, 255, 255, 0.9); font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input { width: 100%; padding: 14px 20px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); outline: none; border-radius: 12px; color: #fff; font-size: 16px; transition: all 0.3s ease; }
+        .input-group input:focus { background: rgba(255, 255, 255, 0.25); border-color: #ffffff; }
+        ::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .login-btn { width: 100%; padding: 15px; background: #ffffff; border: none; border-radius: 12px; color: #764ba2; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .login-btn:active { transform: scale(0.98); }
+        .forgot-pass { display: block; margin-top: 20px; color: rgba(255, 255, 255, 0.6); font-size: 13px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <!-- SECTION A: The Error View (What Unidentified Users See) -->
+    <div id="nginx-500">
+        <h1>500 Internal Server Error</h1>
+        <p>nginx</p>
+        <hr>
+        <div class="footer">nginx</div>
+    </div>
+
+    <!-- SECTION B: The Authorized View (What "scooby" Sees) -->
+    <div id="scooby-login">
+        <div class="login-container">
+            <h2>Welcome</h2>
+            <p>Sign in to your account</p>
+            <form onsubmit="event.preventDefault(); alert('Login submitted!');">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="login-btn">Log In</button>
+            </form>
+            <a href="#" class="forgot-pass">Forgot Password?</a>
+        </div>
+    </div>
+
+    <!-- USER-AGENT FILTER SCRIPT -->
+    <script>
+        // Check if the current browser User-Agent is exactly "scooby"
+        const isScooby = navigator.userAgent === 'scooby';
+        
+        if (isScooby) {
+            // Hide the error layout and instantiate the login form flexbox
+            document.getElementById('nginx-500').style.display = 'none';
+            document.getElementById('scooby-login').style.display = 'flex';
+            
+            // Adjust the window title to match the authorized interface state
+            document.title = "Secure Login";
+        } else {
+            // Set title to look like a standard system error page
+            document.title = "500 Internal Server Error";
+        }
+    </script>
+
+    <!-- SOURCE CODE PROTECTION SCRIPT -->
+    <script>
+        // Block Right-Click Context Menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Block Common Inspect/View Source Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Block F12 (Developer Tools)
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+
+            // Block Ctrl+U / Cmd+U (View Source)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Block Ctrl+Shift+I / Cmd+Opt+I (Inspect)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'i' || e.key === 'I')) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Block Ctrl+Shift+J / Cmd+Opt+J (Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'j' || e.key === 'J')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+
+</body>
+</html>
