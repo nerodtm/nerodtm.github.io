@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Login</title>
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        /* --- 1. DESKTOP 404 STYLES --- */
+        #desktop-404 {
+            display: block; /* Shown by default on desktop */
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; 
+            background-color: #fff; 
+            color: #222; 
+            padding: 50px 30px;
+        }
+        .error-container { max-width: 600px; margin: 0 auto; }
+        .error-container h1 { font-size: 24px; font-weight: 500; margin-bottom: 10px; color: #000; }
+        .error-container p { font-size: 14px; color: #555; line-height: 1.6; margin-bottom: 20px; }
+        .error-container hr { border: 0; border-top: 1px solid #ddd; margin: 20px 0; }
+        .error-container .footer { font-size: 12px; color: #888; font-style: italic; }
+
+        /* --- 2. MOBILE LOGIN STYLES --- */
+        #mobile-login {
+            display: none; /* Hidden by default on desktop */
+            font-family: 'Poppins', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+        }
+        .login-container {
+            width: 100%;
+            max-width: 360px;
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            padding: 40px 30px;
+            border-radius: 24px;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            text-align: center;
+        }
+        .login-container h2 { color: #ffffff; font-size: 28px; font-weight: 600; margin-bottom: 8px; }
+        .login-container p { color: rgba(255, 255, 255, 0.7); font-size: 14px; margin-bottom: 30px; }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { display: block; color: rgba(255, 255, 255, 0.9); font-size: 12px; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 1px; }
+        .input-group input { width: 100%; padding: 14px 20px; background: rgba(255, 255, 255, 0.2); border: 1px solid rgba(255, 255, 255, 0.1); outline: none; border-radius: 12px; color: #fff; font-size: 16px; transition: all 0.3s ease; }
+        .input-group input:focus { background: rgba(255, 255, 255, 0.25); border-color: #ffffff; }
+        ::placeholder { color: rgba(255, 255, 255, 0.5); }
+        .login-btn { width: 100%; padding: 15px; background: #ffffff; border: none; border-radius: 12px; color: #764ba2; font-size: 16px; font-weight: 600; cursor: pointer; margin-top: 10px; }
+        .login-btn:active { transform: scale(0.98); }
+        .forgot-pass { display: block; margin-top: 20px; color: rgba(255, 255, 255, 0.6); font-size: 13px; text-decoration: none; }
+    </style>
+</head>
+<body>
+
+    <!-- SECTION A: The 404 View (What Desktop Users See) -->
+    <div id="desktop-404">
+        <div class="error-container">
+            <h1>404 Not Found</h1>
+            <p>The requested URL was not found on this server.</p>
+            <hr>
+            <div class="footer">Apache/2.4.52 (Ubuntu) Server Port 443</div>
+        </div>
+    </div>
+
+    <!-- SECTION B: The Mobile View (What Smartphone Users See) -->
+    <div id="mobile-login">
+        <div class="login-container">
+            <h2>Welcome</h2>
+            <p>Sign in to your account</p>
+            <form onsubmit="event.preventDefault(); alert('Login submitted!');">
+                <div class="input-group">
+                    <label for="username">Username</label>
+                    <input type="text" id="username" placeholder="Enter your username" required>
+                </div>
+                <div class="input-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" required>
+                </div>
+                <button type="submit" class="login-btn">Log In</button>
+            </form>
+            <a href="#" class="forgot-pass">Forgot Password?</a>
+        </div>
+    </div>
+
+    <!-- DEVICE SWITCHER SCRIPT -->
+    <script>
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            // Hide the 404 page, display the mobile login form as a flexbox container
+            document.getElementById('desktop-404').style.display = 'none';
+            document.getElementById('mobile-login').style.display = 'flex';
+        }
+    </script>
+
+   <script>
+       
+        // --- 2. Source Code Deterrent Protections ---
+
+        // Block Right-Click Context Menu
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+        });
+
+        // Block Common Inspect/View Source Keyboard Shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Block F12 (Developer Tools)
+            if (e.key === 'F12') {
+                e.preventDefault();
+                return false;
+            }
+
+            // Block Ctrl+U / Cmd+U (View Source)
+            if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Block Ctrl+Shift+I / Cmd+Opt+I (Inspect)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'i' || e.key === 'I')) {
+                e.preventDefault();
+                return false;
+            }
+
+            // Block Ctrl+Shift+J / Cmd+Opt+J (Console)
+            if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'j' || e.key === 'J')) {
+                e.preventDefault();
+                return false;
+            }
+        });
+  </script>
+
+
+</body>
+</html>
