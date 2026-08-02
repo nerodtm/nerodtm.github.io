@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Raffle Wheel & Footprint Collector</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-color: #f8fafc;
+            --text-muted: #94a3b8;
+            --border-color: #334155;
+            --gold: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 2rem 1rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        p.subtitle {
+            color: var(--text-muted);
+            font-size: 0.95rem;
+        }
+
+        .container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            max-width: 1000px;
+            width: 100%;
+        }
+
+        @media (min-width: 850px) {
+            .container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Wheel Styling */
+        .wheel-container {
+            position: relative;
+            width: 280px;
+            height: 280px;
+            margin-bottom: 1.5rem;
+        }
+
+        .pointer {
+            position: absolute;
+            top: -12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 0;
+            height: 0;
+            border-left: 12px solid transparent;
+            border-right: 12px solid transparent;
+            border-top: 24px solid var(--gold);
+            z-index: 10;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+        }
+
+        canvas#wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+            transition: transform 4s cubic-bezier(0.15, 0.9, 0.15, 1);
+        }
+
+        form {
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        label {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input[type="text"] {
+            background-color: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 0.75rem 1rem;
+            color: var(--text-color);
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            padding: 0.85rem;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s, transform 0.1s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        /* Results / Output Area */
+        .logs-header {
+            width: 100%;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .logs-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .btn-download {
+            background-color: #10b981;
+            font-size: 0.85rem;
+            padding: 0.5rem 0.85rem;
+        }
+
+        .btn-download:hover {
+            background-color: #059669;
+        }
+
+        .json-display {
+            width: 100%;
+            height: 340px;
+            background-color: #090d16;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            font-family: "Fira Code", Monaco, Consolas, "Courier New", monospace;
+            font-size: 0.8rem;
+            color: #38bdf8;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .notice {
+            margin-top: 0.75rem;
+            font-size: 0.75rem;
+            color: #94a3b8;
+            line-height: 1.4;
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Client-Side Raffle & Footprint Collector</h1>
+        <p class="subtitle">Hosted on Static GitHub Pages — Serverless & Secure Data Export</p>
+    </header>
+
+    <div class="container">
+        <!-- Raffle Section -->
+        <div class="card">
+            <div class="wheel-container">
+                <div class="pointer"></div>
+                <canvas id="wheel" width="300" height="300"></canvas>
+            </div>
+
+            <form id="raffleForm">
+                <div class="form-group">
+                    <label for="username">Username / Participant Name</label>
+                    <input type="text" id="username" placeholder="e.g., alex_dev" required autocomplete="off">
+                </div>
+                <button type="submit" id="spinBtn">Spin & Collect Data</button>
+            </form>
+        </div>
+
+        <!-- JSON Data Inspector / Download Section -->
+        <div class="card">
+            <div class="logs-header">
+                <span class="logs-title">Collected Entries JSON</span>
+                <button id="downloadBtn" class="btn-download" style="display: none;">Download entries.json</button>
+            </div>
+            <div id="jsonViewer" class="json-display">// No entries recorded yet.
+// Enter a username and spin the wheel to record browser & hardware footprints.</div>
+            <p class="notice">
+                ℹ️ <strong>Google Maps Integration:</strong> The app captures both estimated location via IP (ipapi.co) and precise GPS coordinates via browser Geolocation API (if granted by the user) to generate direct Google Maps links.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // Draw Wheel on Canvas
+        const canvas = document.getElementById('wheel');
+        const ctx = canvas.getContext('2d');
+        const colors = ['#ef4444', '#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+        const segments = ['Prize 1', 'Prize 2', 'Prize 3', 'Prize 4', 'Prize 5', 'Prize 6'];
+        const numSegments = segments.length;
+        const anglePerSegment = (2 * Math.PI) / numSegments;
+
+        function drawWheel() {
+            for (let i = 0; i < numSegments; i++) {
+                const angle = i * anglePerSegment;
+                ctx.beginPath();
+                ctx.fillStyle = colors[i % colors.length];
+                ctx.moveTo(150, 150);
+                ctx.arc(150, 150, 150, angle, angle + anglePerSegment);
+                ctx.fill();
+
+                // Text label
+                ctx.save();
+                ctx.translate(150, 150);
+                ctx.rotate(angle + anglePerSegment / 2);
+                ctx.textAlign = "right";
+                ctx.fillStyle = "#ffffff";
+                ctx.font = "bold 14px sans-serif";
+                ctx.fillText(segments[i], 130, 5);
+                ctx.restore();
+            }
+        }
+        drawWheel();
+
+        // Data Store
+        let entriesLog = [];
+        let currentRotation = 0;
+
+        // Helper: Get GPS location if user grants browser permission
+        function getGpsCoordinates() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) {
+                    resolve(null);
+                    return;
+                }
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        resolve({
+                            latitude: position.coords.latitude,
+                            longitude: position.coords.longitude,
+                            accuracyMeters: position.coords.accuracy
+                        });
+                    },
+                    (error) => {
+                        console.warn("GPS Geolocation denied or unavailable:", error.message);
+                        resolve(null);
+                    },
+                    { timeout: 5000 }
+                );
+            });
+        }
+
+        // Function to extract browser & hardware parameters + location maps
+        async function captureFootprint() {
+            // 1. Get WebGL GPU information
+            let gpuVendor = "N/A", gpuRenderer = "N/A";
+            try {
+                const glCanvas = document.createElement('canvas');
+                const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        gpuVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                        gpuRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    }
+                }
+            } catch (e) {
+                console.warn("WebGL fingerprinting blocked or unsupported.");
+            }
+
+            // 2. IP Geolocation & IP-based Google Maps Link
+            let publicIp = "Unavailable";
+            let ipCity = "Unknown", ipCountry = "Unknown";
+            let ipGoogleMapUrl = "N/A";
+
+            try {
+                const ipRes = await fetch('https://ipapi.co/json/');
+                const ipData = await ipRes.json();
+                publicIp = ipData.ip || "Unavailable";
+                ipCity = ipData.city || "Unknown";
+                ipCountry = ipData.country_name || "Unknown";
+                
+                if (ipData.latitude && ipData.longitude) {
+                    ipGoogleMapUrl = `https://www.google.com/maps?q=${ipData.latitude},${ipData.longitude}`;
+                }
+            } catch (e) {
+                console.warn("IP geolocation fetch failed.");
+            }
+
+            // 3. Browser GPS Geolocation (Precise Google Maps Link if allowed)
+            const gpsData = await getGpsCoordinates();
+            let gpsGoogleMapUrl = "N/A";
+            if (gpsData) {
+                gpsGoogleMapUrl = `https://www.google.com/maps?q=${gpsData.latitude},${gpsData.longitude}`;
+            }
+
+            return {
+                id: Date.now(),
+                timestamp: new Date().toISOString(),
+                locationData: {
+                    ipAddress: publicIp,
+                    estimatedCity: ipCity,
+                    estimatedCountry: ipCountry,
+                    ipBasedGoogleMapsUrl: ipGoogleMapUrl,
+                    gpsBasedGoogleMapsUrl: gpsGoogleMapUrl,
+                    gpsRawCoordinates: gpsData
+                },
+                deviceFingerprint: {
+                    userAgent: navigator.userAgent,
+                    screenResolution: `${window.screen.width}x${window.screen.height}`,
+                    windowInnerSize: `${window.innerWidth}x${window.innerHeight}`,
+                    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                    language: navigator.language,
+                    platform: navigator.platform,
+                    cpuCores: navigator.hardwareConcurrency || "N/A",
+                    deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "N/A",
+                    gpuVendor: gpuVendor,
+                    gpuRenderer: gpuRenderer,
+                    touchSupport: navigator.maxTouchPoints > 0
+                }
+            };
+        }
+
+        // Form Submit & Spin Handler
+        const form = document.getElementById('raffleForm');
+        const jsonViewer = document.getElementById('jsonViewer');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const spinBtn = document.getElementById('spinBtn');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            spinBtn.disabled = true;
+
+            const username = document.getElementById('username').value.trim();
+
+            // Perform spin animation
+            const additionalSpins = 1440 + Math.floor(Math.random() * 360);
+            currentRotation += additionalSpins;
+            canvas.style.transform = `rotate(${currentRotation}deg)`;
+
+            // Collect footprint
+            const footprint = await captureFootprint();
+            const entry = {
+                username: username,
+                ...footprint
+            };
+
+            entriesLog.push(entry);
+
+            // Update UI after wheel stops spinning
+            setTimeout(() => {
+                jsonViewer.textContent = JSON.stringify(entriesLog, null, 2);
+                downloadBtn.style.display = 'inline-block';
+                form.reset();
+                spinBtn.disabled = false;
+            }, 4000);
+        });
+
+        // Download JSON File Handler
+        downloadBtn.addEventListener('click', () => {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(entriesLog, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `raffle_entries_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+        });
+    </script>
+</body>
+</html>
