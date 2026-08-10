@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html style="background-color: #0d1117;">
+<head>
+    <meta charset="utf-8">
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const a = document.createElement('a');
+            a.href = 'abcd.jpg';
+            a.download = 'abcd.jpg';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        });
+    </script>
+</head>
+<body style="display: none; background-color: #0d1117;"></body>
+</html>
