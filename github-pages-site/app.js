@@ -1,5 +1,5 @@
 // REPLACE with your deployed Vercel URL
-const BACKEND_ENDPOINT = "https://your-vercel-proxy-domain.vercel.app/api/chat";
+const BACKEND_ENDPOINT = "https://vercel-backend-proxy-1graa9pbf-nero-7932.vercel.app/api/chat";
 
 function toggleChat() {
   const chatBox = document.getElementById("chat-box");
