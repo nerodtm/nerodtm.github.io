@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Aura — Next-Gen AI Solutions</title>
+  <link rel="stylesheet" href="style.css" />
+  <!-- Google Fonts & Lucide Icons -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+  <!-- Navigation -->
+  <nav class="navbar">
+    <div class="nav-brand">
+      <div class="logo-icon"><i data-lucide="sparkles"></i></div>
+      <span>Aura.ai</span>
+    </div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#about">About</a>
+      <a href="#contact" class="nav-cta">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Hero Section -->
+  <header class="hero">
+    <div class="hero-badge">
+      <span class="badge-pulse"></span> Powered by Groq Llama 3
+    </div>
+    <h1>Build Intelligence <br><span class="gradient-text">At The Speed of Light</span></h1>
+    <p>Empower your website with real-time AI assistance, automated customer support, and seamless guardrails.</p>
+    <div class="hero-actions">
+      <button class="btn btn-primary" onclick="toggleChat()">
+        <i data-lucide="message-square"></i> Try AI Assistant
+      </button>
+      <a href="#features" class="btn btn-secondary">Learn More</a>
+    </div>
+  </header>
+
+  <!-- Feature Grid -->
+  <section id="features" class="features-section">
+    <h2 class="section-title">Engineered for Performance</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="card-icon"><i data-lucide="zap"></i></div>
+        <h3>Ultra Fast Inference</h3>
+        <p>Leveraging Groq Llama 3 models to deliver responses in under 200 milliseconds.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><i data-lucide="shield-check"></i></div>
+        <h3>Built-In Guardrails</h3>
+        <p>Smart client-side input validation and strict prompt execution boundaries.</p>
+      </div>
+      <div class="card">
+        <div class="card-icon"><i data-lucide="code-2"></i></div>
+        <h3>Static Deployment</h3>
+        <p>Hosted natively on GitHub Pages without requiring expensive backend servers.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Floating Chat Launcher -->
+  <button id="chat-launcher" onclick="toggleChat()" aria-label="Open Chat">
+    <i data-lucide="sparkles" class="icon-sparkles"></i>
+    <span>Chat with AI</span>
+  </button>
+
+  <!-- Chat Widget Window -->
+  <div id="chat-card" class="chat-hidden">
+    <div class="chat-header">
+      <div class="brand">
+        <div class="avatar-glow"><i data-lucide="bot"></i></div>
+        <div class="brand-info">
+          <h4>Groq Assistant</h4>
+          <span class="status-badge"><span class="pulse"></span> Online</span>
+        </div>
+      </div>
+      <button class="close-btn" onclick="toggleChat()"><i data-lucide="x"></i></button>
+    </div>
+
+    <div id="chat-messages">
+      <div class="msg bot-msg">Hello! 👋 Welcome to Aura. How can I assist you today?</div>
+    </div>
+
+    <div class="chat-input-wrapper">
+      <input type="text" id="user-input" placeholder="Ask anything..." onkeypress="handleKeyPress(event)" autocomplete="off" />
+      <button id="send-btn" onclick="sendMessage()"><i data-lucide="send"></i></button>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+  <script>lucide.createIcons();</script>
+</body>
+</html>
