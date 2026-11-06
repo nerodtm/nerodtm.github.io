@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Browser-Adaptive Web Experience</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <!-- Google Fonts: Inter, Plus Jakarta Sans, Fira Code -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&family=Inter:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Plus Jakarta Sans', 'sans-serif'],
+            mono: ['Fira Code', 'monospace'],
+          },
+          colors: {
+            chrome: {
+              blue: '#1a73e8',
+              bg: '#f8f9fa',
+              surface: '#ffffff',
+              border: '#dadce0',
+              accent: '#e8f0fe',
+              text: '#202124'
+            },
+            edge: {
+              blue: '#0078d4',
+              teal: '#00a4ef',
+              darkBg: '#0f172a',
+              cardDark: 'rgba(30, 41, 59, 0.75)',
+              accent: '#38bdf8'
+            },
+            brave: {
+              orange: '#ff5500',
+              purple: '#6b21a8',
+              darkBg: '#0b0c10',
+              cardDark: '#12141d',
+              neon: '#ff7700'
+            },
+            firefox: {
+              orange: '#ff7139',
+              purple: '#5b5b95',
+              darkBg: '#1c1b22',
+              cardDark: '#2b2a33',
+              accent: '#ff9400'
+            }
+          },
+          animation: {
+            'fade-in': 'fadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+            'pulse-slow': 'pulse 3s infinite',
+          },
+          keyframes: {
+            fadeIn: {
+              '0%': { opacity: '0', transform: 'translateY(8px)' },
+              '100%': { opacity: '1', transform: 'translateY(0)' },
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom Acrylic Glassmorphism for Edge View */
+    .fluent-acrylic {
+      background: rgba(30, 41, 59, 0.75);
+      backdrop-filter: blur(20px) saturate(180%);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+    }
+    
+    /* Chrome Elevation Shadow */
+    .chrome-shadow {
+      box-shadow: 0 1px 3px 0 rgba(60,64,67,0.3), 0 4px 8px 3px rgba(60,64,67,0.15);
+    }
+
+    /* Brave Neon Glow */
+    .brave-glow {
+      box-shadow: 0 0 25px -5px rgba(255, 85, 0, 0.3);
+    }
+
+    /* Firefox Code Scrollbar */
+    .ff-scrollbar::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    .ff-scrollbar::-webkit-scrollbar-track {
+      background: #1c1b22;
+    }
+    .ff-scrollbar::-webkit-scrollbar-thumb {
+      background: #4a4956;
+      border-radius: 3px;
+    }
+  </style>
+</head>
+<body class="h-full font-sans antialiased flex flex-col min-h-screen bg-slate-950 text-slate-100 selection:bg-indigo-500 selection:text-white">
+
+  <!-- PERSISTENT DEVELOPER TOOLBAR (Floating Bottom Bar for Manual Override) -->
+  <aside aria-label="Browser Test Override Toolbar" class="fixed bottom-4 left-1/2 -translate-x-1/2 z-50 bg-slate-900/90 backdrop-blur-md rounded-full px-4 py-2.5 shadow-2xl border border-slate-700/80 text-xs transition-all duration-300">
+    <div class="flex items-center gap-3">
+      <div class="flex items-center gap-2 pr-3 border-r border-slate-700">
+        <span class="relative flex h-2.5 w-2.5">
+          <span id="status-ping" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+          <span id="status-dot" class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+        </span>
+        <span class="font-bold text-slate-200">Browser Tester</span>
+      </div>
+      
+      <!-- Override Buttons -->
+      <div class="bg-slate-950 p-1 rounded-full border border-slate-800 flex items-center gap-1">
+        <button id="btn-auto" onclick="setBrowserOverride('auto')" class="px-3 py-1 rounded-full font-medium text-xs transition-all duration-200 bg-indigo-600 text-white shadow-sm">
+          <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Auto (Detect)
+        </button>
+        <button id="btn-chrome" onclick="setBrowserOverride('chrome')" class="px-3 py-1 rounded-full font-medium text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all">
+          <i class="fa-brands fa-chrome mr-1 text-blue-400"></i>Chrome
+        </button>
+        <button id="btn-edge" onclick="setBrowserOverride('edge')" class="px-3 py-1 rounded-full font-medium text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all">
+          <i class="fa-brands fa-edge mr-1 text-sky-400"></i>Edge
+        </button>
+        <button id="btn-brave" onclick="setBrowserOverride('brave')" class="px-3 py-1 rounded-full font-medium text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all">
+          <i class="fa-brands fa-brave mr-1 text-orange-500"></i>Brave
+        </button>
+        <button id="btn-firefox" onclick="setBrowserOverride('firefox')" class="px-3 py-1 rounded-full font-medium text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all">
+          <i class="fa-brands fa-firefox-browser mr-1 text-amber-500"></i>Firefox
+        </button>
+        <button id="btn-other" onclick="setBrowserOverride('other')" class="px-3 py-1 rounded-full font-medium text-xs text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-all">
+          <i class="fa-solid fa-compass mr-1 text-purple-400"></i>Generic
+        </button>
+      </div>
+
+      <button onclick="detectBrowser(true)" title="Re-detect Browser" class="p-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition-all ml-1">
+        <i class="fa-solid fa-arrows-rotate"></i>
+      </button>
+    </div>
+  </aside>
+
+  <!-- MAIN APP CONTAINER -->
+  <main id="app" class="flex-1 flex flex-col relative overflow-x-hidden">
+    
+    <!-- STATE 1: INITIAL LOADING SCREEN -->
+    <section id="view-loading" class="flex-1 flex flex-col items-center justify-center p-6 text-center z-10 bg-slate-950">
+      <div class="relative flex items-center justify-center mb-6">
+        <div class="w-20 h-20 rounded-full border-4 border-slate-800 border-t-indigo-500 animate-spin"></div>
+        <i class="fa-solid fa-laptop-code text-2xl text-indigo-400 absolute"></i>
+      </div>
+      <h2 class="text-xl font-bold text-white mb-2">Analyzing Browser Client...</h2>
+      <p class="text-slate-400 text-sm max-w-sm">Inspecting navigator properties, rendering engine characteristics, and vendor signatures.</p>
+    </section>
+
+
+    <!-- STATE 2: CHROME VIEW (GOOGLE MATERIAL 3 / CHROME OS AESTHETIC) -->
+    <section id="view-chrome" class="hidden flex-1 flex flex-col bg-[#f8f9fa] text-[#202124] min-h-screen pb-20">
+      <!-- Chrome App Bar & Omnibox Header -->
+      <header class="bg-white border-b border-[#dadce0] px-6 py-3 flex flex-wrap items-center justify-between gap-4 sticky top-0 z-30 shadow-sm">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-full bg-[#e8f0fe] flex items-center justify-center text-[#1a73e8]">
+            <i class="fa-brands fa-chrome text-xl"></i>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg text-[#202124] block leading-none">Chrome OS Workspace</span>
+            <span class="text-xs text-[#5f6368]">Material 3 Design Integration</span>
+          </div>
+        </div>
+
+        <!-- Google Omnibox Mock -->
+        <div class="flex-1 max-w-xl mx-4 hidden md:flex items-center bg-[#f1f3f4] hover:bg-[#e8eaed] focus-within:bg-white focus-within:shadow-md border border-transparent focus-within:border-[#dadce0] rounded-full px-4 py-2 transition-all">
+          <i class="fa-solid fa-magnifying-glass text-[#5f6368] mr-3"></i>
+          <input type="text" value="chrome://settings/system-adaptive-ui" readonly class="bg-transparent border-none outline-none text-xs text-[#202124] w-full cursor-default font-mono">
+          <i class="fa-solid fa-star text-[#5f6368] hover:text-[#1a73e8] cursor-pointer ml-2"></i>
+        </div>
+
+        <!-- Detected Badge -->
+        <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#e8f0fe] text-[#1a73e8] text-xs font-medium border border-[#c2e7ff]">
+          <span class="w-2 h-2 rounded-full bg-[#1a73e8] animate-pulse"></span>
+          <span>Engine: Chromium (<span class="chrome-version-txt">120+</span>)</span>
+        </div>
+      </header>
+
+      <!-- Chrome Body Content -->
+      <div class="max-w-6xl mx-auto w-full px-6 py-10 flex-1 flex flex-col gap-8">
+        
+        <!-- Welcome Hero Banner -->
+        <div class="bg-white rounded-3xl p-8 border border-[#dadce0] chrome-shadow flex flex-col md:flex-row items-center justify-between gap-8">
+          <div class="space-y-4 max-w-xl">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#feefc3] text-[#b06000] text-xs font-semibold">
+              <i class="fa-solid fa-circle-check"></i> Primary Browser Detected
+            </span>
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-[#202124] tracking-tight">
+              Optimized for <span class="text-[#1a73e8]">Google Chrome</span>
+            </h1>
+            <p class="text-[#5f6368] text-sm leading-relaxed">
+              Your client signature matched Chrome's Blink engine architecture. The interface has adapted with Google Material You elevation standards, pill-shaped UI components, and Google Cloud integration shortcuts.
+            </p>
+            <div class="flex items-center gap-3 pt-2">
+              <button onclick="alert('Google Account Sync Simulated!')" class="bg-[#1a73e8] hover:bg-[#1557b0] text-white font-medium px-6 py-2.5 rounded-full text-xs shadow-md transition-all">
+                Sync Account Profile
+              </button>
+              <button onclick="alert('Chrome Web Store Extensions Loaded!')" class="bg-white hover:bg-[#f8f9fa] text-[#1a73e8] border border-[#dadce0] font-medium px-6 py-2.5 rounded-full text-xs transition-all">
+                Manage Extensions
+              </button>
+            </div>
+          </div>
+
+          <!-- Chrome Ecosystem Icon Grid -->
+          <div class="grid grid-cols-2 gap-4 w-full md:w-auto">
+            <div class="bg-[#f8f9fa] p-5 rounded-2xl border border-[#e8eaed] text-center w-32 hover:border-[#1a73e8] transition-colors">
+              <i class="fa-brands fa-google-drive text-3xl text-[#0f9d58] mb-2"></i>
+              <div class="text-xs font-semibold text-[#202124]">Drive</div>
+            </div>
+            <div class="bg-[#f8f9fa] p-5 rounded-2xl border border-[#e8eaed] text-center w-32 hover:border-[#1a73e8] transition-colors">
+              <i class="fa-solid fa-envelope text-3xl text-[#ea4335] mb-2"></i>
+              <div class="text-xs font-semibold text-[#202124]">Gmail</div>
+            </div>
+            <div class="bg-[#f8f9fa] p-5 rounded-2xl border border-[#e8eaed] text-center w-32 hover:border-[#1a73e8] transition-colors">
+              <i class="fa-solid fa-video text-3xl text-[#4285f4] mb-2"></i>
+              <div class="text-xs font-semibold text-[#202124]">Meet</div>
+            </div>
+            <div class="bg-[#f8f9fa] p-5 rounded-2xl border border-[#e8eaed] text-center w-32 hover:border-[#1a73e8] transition-colors">
+              <i class="fa-solid fa-code text-3xl text-[#fbbc05] mb-2"></i>
+              <div class="text-xs font-semibold text-[#202124]">DevTools</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Google Workspace Interactive Widget Cards -->
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-white p-6 rounded-3xl border border-[#dadce0] shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-bold text-[#5f6368] uppercase tracking-wider">System Hardware</span>
+              <i class="fa-solid fa-microchip text-[#1a73e8]"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#202124] mb-1" id="chrome-ram-display">8 GB V8 Heap</div>
+            <p class="text-xs text-[#5f6368]">High-efficiency memory management enabled via Chrome V8 JavaScript Engine.</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-3xl border border-[#dadce0] shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-bold text-[#5f6368] uppercase tracking-wider">Graphics Renderer</span>
+              <i class="fa-solid fa-cube text-[#0f9d58]"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#202124] mb-1">ANGLE WebGL2</div>
+            <p class="text-xs text-[#5f6368]">Hardware-accelerated compositing and Canvas 2D rendering active.</p>
+          </div>
+
+          <div class="bg-white p-6 rounded-3xl border border-[#dadce0] shadow-sm hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+              <span class="text-xs font-bold text-[#5f6368] uppercase tracking-wider">Security Engine</span>
+              <i class="fa-solid fa-shield-virus text-[#ea4335]"></i>
+            </div>
+            <div class="text-2xl font-bold text-[#202124] mb-1">Safe Browsing</div>
+            <p class="text-xs text-[#5f6368]">Real-time standard protection and sandboxed execution environment.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- STATE 3: EDGE VIEW (MICROSOFT FLUENT DESIGN / ACRYLIC BLUR AESTHETIC) -->
+    <section id="view-edge" class="hidden flex-1 flex flex-col bg-slate-950 text-slate-100 min-h-screen relative pb-20 overflow-hidden">
+      <!-- Fluent Background Ambient Lights -->
+      <div class="absolute top-0 left-1/4 w-96 h-96 bg-sky-600/20 rounded-full blur-3xl pointer-events-none"></div>
+      <div class="absolute bottom-10 right-10 w-96 h-96 bg-blue-600/20 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Edge Fluent Top Nav Bar -->
+      <header class="w-full px-8 py-4 flex items-center justify-between z-10 fluent-acrylic sticky top-0">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-sky-500 to-blue-600 flex items-center justify-center text-white shadow-lg shadow-sky-500/20">
+            <i class="fa-brands fa-edge text-xl"></i>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg text-white block leading-none">Microsoft Edge Workspace</span>
+            <span class="text-xs text-sky-300">Fluent Design & Acrylic UI</span>
+          </div>
+        </div>
+
+        <!-- Microsoft Copilot Indicator Pill -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-sky-950/80 border border-sky-500/40 text-xs text-sky-200 font-medium">
+            <i class="fa-solid fa-sparkles text-sky-400"></i>
+            <span>Copilot Integration Ready</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="max-w-7xl mx-auto w-full px-6 py-10 flex-1 grid lg:grid-cols-3 gap-8 z-10">
+        <!-- Main Content Area -->
+        <div class="lg:col-span-2 space-y-6">
+          <div class="fluent-acrylic p-8 rounded-3xl relative overflow-hidden animate-fade-in">
+            <div class="absolute top-0 right-0 p-8 opacity-10">
+              <i class="fa-brands fa-windows text-9xl text-white"></i>
+            </div>
+            
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-500/20 text-sky-300 border border-sky-500/30 text-xs font-semibold mb-4">
+              <i class="fa-brands fa-microsoft"></i> Edge Client Confirmed
+            </span>
+
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
+              Tailored for <span class="bg-gradient-to-r from-sky-400 to-blue-500 bg-clip-text text-transparent">Microsoft Edge</span>
+            </h1>
+
+            <p class="text-slate-300 text-sm leading-relaxed mb-6 max-w-xl">
+              We detected Microsoft Edge running on your device. The interface now features Windows 11 Acrylic blur surfaces, integrated Copilot assist widgets, and Edge Sleeping Tabs performance metrics.
+            </p>
+
+            <div class="flex items-center gap-4">
+              <button onclick="alert('Microsoft Copilot Panel Docked!')" class="bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white font-medium px-6 py-3 rounded-2xl text-xs shadow-lg shadow-sky-500/25 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Launch Copilot Assistant
+              </button>
+              <button onclick="alert('Edge Vertical Tabs Enabled!')" class="bg-slate-800/80 hover:bg-slate-700 text-slate-200 border border-slate-700 font-medium px-6 py-3 rounded-2xl text-xs transition-all">
+                Toggle Vertical Tabs
+              </button>
+            </div>
+          </div>
+
+          <!-- Edge Feature Metrics Grid -->
+          <div class="grid sm:grid-cols-2 gap-6">
+            <div class="fluent-acrylic p-6 rounded-3xl">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-400">Memory Efficiency</span>
+                <i class="fa-solid fa-[#00a4ef] fa-bed text-sky-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white mb-1">Sleeping Tabs Active</div>
+              <p class="text-xs text-slate-400">Saving up to 82% background RAM per inactive workspace tab.</p>
+            </div>
+
+            <div class="fluent-acrylic p-6 rounded-3xl">
+              <div class="flex items-center justify-between mb-3">
+                <span class="text-xs font-semibold text-slate-400">Tracking Prevention</span>
+                <i class="fa-solid fa-shield-halved text-sky-400"></i>
+              </div>
+              <div class="text-2xl font-bold text-white mb-1">Balanced Shield</div>
+              <p class="text-xs text-slate-400">Blocking malicious scripts and cross-site telemetry requests.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Copilot Sidebar Panel -->
+        <div class="fluent-acrylic p-6 rounded-3xl flex flex-col justify-between">
+          <div>
+            <div class="flex items-center gap-3 mb-6 pb-4 border-b border-slate-700/80">
+              <div class="w-8 h-8 rounded-lg bg-gradient-to-r from-purple-500 to-sky-500 flex items-center justify-center text-white text-xs">
+                <i class="fa-solid fa-sparkles"></i>
+              </div>
+              <div>
+                <h3 class="font-bold text-sm text-white">Copilot Sidebar</h3>
+                <span class="text-[10px] text-sky-400">AI Context Companion</span>
+              </div>
+            </div>
+
+            <div class="space-y-4">
+              <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 text-xs text-slate-300">
+                <p class="font-semibold text-sky-300 mb-1">Edge Smart Summary:</p>
+                This web app detected Edge version <span class="edge-version-txt font-mono text-white">120.0</span> via User-Agent pattern parsing.
+              </div>
+              <div class="bg-slate-900/60 p-3.5 rounded-2xl border border-slate-800 text-xs text-slate-300">
+                <p class="font-semibold text-sky-300 mb-1">Suggested Prompt:</p>
+                "How does Edge's Sleeping Tabs feature optimize system performance?"
+              </div>
+            </div>
+          </div>
+
+          <div class="pt-6 border-t border-slate-700/80">
+            <button onclick="alert('Copilot Prompt Sent!')" class="w-full bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-500/30 font-medium p-3 rounded-xl text-xs flex items-center justify-center gap-2">
+              <i class="fa-solid fa-paper-plane"></i> Ask Copilot
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- STATE 4: BRAVE VIEW (PRIVACY & WEB3 / NEON DARK THEME AESTHETIC) -->
+    <section id="view-brave" class="hidden flex-1 flex flex-col bg-[#0b0c10] text-slate-100 min-h-screen relative pb-20">
+      <!-- Brave Top Header Bar -->
+      <header class="w-full px-8 py-4 flex items-center justify-between border-b border-slate-800 bg-[#12141d]/90 sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-orange-600 to-amber-500 flex items-center justify-center text-white shadow-lg shadow-orange-600/30">
+            <i class="fa-brands fa-brave text-2xl"></i>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg text-white block leading-none">Brave Shields Portal</span>
+            <span class="text-xs text-orange-400 font-mono">Web3 & Privacy First</span>
+          </div>
+        </div>
+
+        <!-- Brave Shields Status Widget -->
+        <div class="flex items-center gap-3">
+          <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-orange-950/60 border border-orange-500/40 text-xs text-orange-300 font-semibold shadow-inner">
+            <i class="fa-solid fa-shield-check text-orange-400"></i>
+            <span>Brave Shields: ACTIVE</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="max-w-6xl mx-auto w-full px-6 py-10 flex-1 flex flex-col gap-8">
+        
+        <!-- Brave Hero Banner -->
+        <div class="bg-[#12141d] rounded-3xl p-8 border border-orange-500/30 brave-glow relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+          <div class="space-y-4 max-w-xl z-10">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-orange-500/10 text-orange-400 border border-orange-500/30 text-xs font-semibold">
+              <i class="fa-solid fa-[#ff5500] fa-user-shield"></i> Verified Brave Environment
+            </span>
+
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+              Protected by <span class="text-orange-500">Brave Browser</span>
+            </h1>
+
+            <p class="text-slate-400 text-sm leading-relaxed">
+              Detection confirmed via <code class="bg-slate-900 px-2 py-0.5 rounded text-orange-300 font-mono text-xs">navigator.brave.isBrave()</code> API signature. Trackers are blocked by default and Web3 wallet capabilities are highlighted.
+            </p>
+
+            <div class="flex items-center gap-4 pt-2">
+              <button onclick="alert('Brave Shields Custom Controls Opened!')" class="bg-gradient-to-r from-orange-600 to-amber-600 hover:from-orange-500 hover:to-amber-500 text-white font-bold px-6 py-3 rounded-xl text-xs shadow-lg shadow-orange-500/20 transition-all flex items-center gap-2">
+                <i class="fa-solid fa-sliders"></i> Adjust Privacy Shields
+              </button>
+              <button onclick="alert('Brave Wallet Connected!')" class="bg-slate-900 hover:bg-slate-800 text-orange-400 border border-orange-500/30 font-semibold px-6 py-3 rounded-xl text-xs transition-all flex items-center gap-2">
+                <i class="fa-solid fa-wallet"></i> Connect Web3 Wallet
+              </button>
+            </div>
+          </div>
+
+          <!-- Brave Trackers Blocked Widget Counter -->
+          <div class="bg-[#0b0c10] p-6 rounded-2xl border border-slate-800 w-full md:w-80 space-y-4">
+            <div class="text-xs font-bold text-slate-400 uppercase tracking-widest flex items-center justify-between">
+              <span>Privacy Metrics</span>
+              <i class="fa-solid fa-[#ff5500] fa-chart-pie text-orange-500"></i>
+            </div>
+            
+            <div class="border-b border-slate-800 pb-3">
+              <div class="text-3xl font-extrabold text-orange-500 font-mono">14,892</div>
+              <div class="text-xs text-slate-500">Trackers & Ads Blocked</div>
+            </div>
+
+            <div class="border-b border-slate-800 pb-3">
+              <div class="text-3xl font-extrabold text-amber-400 font-mono">248 MB</div>
+              <div class="text-xs text-slate-500">Bandwidth Saved</div>
+            </div>
+
+            <div>
+              <div class="text-3xl font-extrabold text-emerald-400 font-mono">12.4 mins</div>
+              <div class="text-xs text-slate-500">Estimated Time Saved</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Brave Features Grid -->
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-[#12141d] p-6 rounded-3xl border border-slate-800 hover:border-orange-500/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-500 flex items-center justify-center text-lg mb-4">
+              <i class="fa-solid fa-eye-slash"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1">Fingerprint Protection</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Canvas and WebGL device fingerprinting APIs are randomized to protect user anonymity.</p>
+          </div>
+
+          <div class="bg-[#12141d] p-6 rounded-3xl border border-slate-800 hover:border-orange-500/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-500 flex items-center justify-center text-lg mb-4">
+              <i class="fa-solid fa-coins"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1">Brave Rewards BAT</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Opt-in privacy-preserving ads earn Basic Attention Tokens (BAT) directly in-browser.</p>
+          </div>
+
+          <div class="bg-[#12141d] p-6 rounded-3xl border border-slate-800 hover:border-orange-500/40 transition-colors">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-400 flex items-center justify-center text-lg mb-4">
+              <i class="fa-solid fa-[#6b21a8] fa-network-wired"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1">IPFS Native Support</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Decentralized InterPlanetary File System protocols are natively resolved without gateways.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- STATE 5: FIREFOX VIEW (DEVELOPER & OPEN WEB / FOX AMBER AESTHETIC) -->
+    <section id="view-firefox" class="hidden flex-1 flex flex-col bg-[#1c1b22] text-[#fbfbfe] min-h-screen pb-20">
+      <!-- Firefox Top Navigation Header -->
+      <header class="w-full px-8 py-4 flex items-center justify-between border-b border-[#383441] bg-[#2b2a33]/90 sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-amber-500 via-orange-500 to-purple-600 flex items-center justify-center text-white shadow-lg shadow-orange-500/20">
+            <i class="fa-brands fa-firefox-browser text-2xl"></i>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg text-white block leading-none">Firefox Dev Edition</span>
+            <span class="text-xs text-amber-400 font-mono">Gecko Layout Engine</span>
+          </div>
+        </div>
+
+        <!-- Gecko Badge -->
+        <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-[#383441] border border-amber-500/40 text-xs text-amber-300 font-mono">
+          <i class="fa-solid fa-code-branch text-amber-400"></i>
+          <span>Gecko Build <span class="ff-version-txt">120.0</span></span>
+        </div>
+      </header>
+
+      <div class="max-w-6xl mx-auto w-full px-6 py-10 flex-1 flex flex-col gap-8">
+        
+        <!-- Firefox Hero Card -->
+        <div class="bg-[#2b2a33] rounded-3xl p-8 border border-[#4a4956] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-8">
+          <div class="space-y-4 max-w-xl">
+            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 text-xs font-semibold">
+              <i class="fa-brands fa-firefox"></i> Open Web Gecko Architecture
+            </span>
+
+            <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight">
+              Engineered for <span class="bg-gradient-to-r from-amber-400 to-orange-500 bg-clip-text text-transparent">Mozilla Firefox</span>
+            </h1>
+
+            <p class="text-slate-300 text-sm leading-relaxed">
+              Client detection matched Mozilla Gecko layout engine signature. Firefox's independent web engine provides enhanced CSS Grid debugging, container queries, and privacy protection against cross-site tracking cookies.
+            </p>
+
+            <div class="flex items-center gap-4 pt-2">
+              <button onclick="alert('Firefox Developer Console Opened!')" class="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-400 hover:to-amber-400 text-slate-950 font-bold px-6 py-3 rounded-xl text-xs shadow-lg transition-all flex items-center gap-2">
+                <i class="fa-solid fa-terminal"></i> Open Developer Tools
+              </button>
+              <button onclick="alert('Multi-Account Containers Active!')" class="bg-[#1c1b22] hover:bg-[#383441] text-amber-300 border border-[#4a4956] font-semibold px-6 py-3 rounded-xl text-xs transition-all flex items-center gap-2">
+                <i class="fa-solid fa-boxes-stacked"></i> Manage Container Tabs
+              </button>
+            </div>
+          </div>
+
+          <div class="w-full md:w-72 bg-[#1c1b22] p-5 rounded-2xl border border-[#4a4956] font-mono text-xs space-y-3">
+            <div class="text-amber-400 font-bold border-b border-[#383441] pb-2 flex justify-between items-center">
+              <span>Gecko Dev Console</span>
+              <i class="fa-solid fa-[#ff7139] fa-[#ff7139] fa-laptop-code"></i>
+            </div>
+            <div class="text-slate-400 space-y-1">
+              <p><span class="text-purple-400">const</span> engine = <span class="text-amber-300">"Gecko"</span>;</p>
+              <p><span class="text-purple-400">const</span> container = <span class="text-emerald-400">true</span>;</p>
+              <p><span class="text-purple-400">const</span> trackShield = <span class="text-amber-300">"Strict"</span>;</p>
+              <p class="text-slate-500 pt-2">// Output: Independent Web Standard</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Firefox Dev Feature Grid -->
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="bg-[#2b2a33] p-6 rounded-3xl border border-[#4a4956]">
+            <div class="w-10 h-10 rounded-xl bg-amber-500/10 text-amber-400 flex items-center justify-center text-lg mb-4">
+              <i class="fa-solid fa-border-all"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1">CSS Grid & Flexbox Inspector</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Industry-standard layout visualization tools built directly into the core developer console.</p>
+          </div>
+
+          <div class="bg-[#2b2a33] p-6 rounded-3xl border border-[#4a4956]">
+            <div class="w-10 h-10 rounded-xl bg-orange-500/10 text-orange-400 flex items-center justify-center text-lg mb-4">
+              <i class="fa-solid fa-[#ff7139] fa-box-archive"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1">Multi-Account Containers</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Isolate web browsing activity into color-coded container tabs for work, personal, and shopping.</p>
+          </div>
+
+          <div class="bg-[#2b2a33] p-6 rounded-3xl border border-[#4a4956]">
+            <div class="w-10 h-10 rounded-xl bg-purple-500/10 text-purple-300 flex items-center justify-center text-lg mb-4">
+              <i class="fa-solid fa-user-lock"></i>
+            </div>
+            <h3 class="font-bold text-white mb-1">Enhanced Tracking Protection</h3>
+            <p class="text-xs text-slate-400 leading-relaxed">Strict isolation of total cookie protection preventing cross-site user fingerprinting.</p>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+
+    <!-- STATE 6: FALLBACK / GENERIC BROWSER VIEW (SAFARI OR UNKNOWN) -->
+    <section id="view-other" class="hidden flex-1 flex flex-col bg-slate-900 text-slate-100 min-h-screen pb-20">
+      <header class="w-full px-8 py-4 flex items-center justify-between border-b border-slate-800 bg-slate-950/80 sticky top-0 z-30">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-purple-600 flex items-center justify-center text-white shadow-lg">
+            <i class="fa-solid fa-compass text-2xl"></i>
+          </div>
+          <div>
+            <span class="font-display font-bold text-lg text-white block leading-none">Universal Browser View</span>
+            <span class="text-xs text-purple-400">Standard Web Standards Engine</span>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs text-purple-300 font-semibold">
+          <i class="fa-solid fa-globe"></i>
+          <span>Detected: <span id="generic-browser-name">Safari / Other</span></span>
+        </div>
+      </header>
+
+      <div class="max-w-5xl mx-auto w-full px-6 py-12 flex-1 flex flex-col items-center justify-center text-center">
+        <div class="w-20 h-20 rounded-3xl bg-purple-500/10 border border-purple-500/20 text-purple-400 flex items-center justify-center text-3xl mb-6">
+          <i class="fa-solid fa-compass"></i>
+        </div>
+
+        <h1 class="text-3xl sm:text-5xl font-extrabold text-white tracking-tight mb-4">
+          Universal Web Platform
+        </h1>
+
+        <p class="text-slate-400 text-base max-w-xl mb-8 leading-relaxed">
+          You are viewing our adaptive web application. We detected <strong id="generic-name-inline" class="text-purple-300">Safari or a standard browser user agent</strong>.
+        </p>
+
+        <div class="bg-slate-950 p-6 rounded-2xl border border-slate-800 w-full max-w-lg text-left text-xs font-mono space-y-2 mb-8">
+          <div class="text-slate-500">// Client User-Agent Header Details:</div>
+          <div id="generic-ua-display" class="text-slate-300 break-all leading-relaxed">Detecting user agent string...</div>
+        </div>
+
+        <div class="flex flex-wrap justify-center gap-4">
+          <button onclick="setBrowserOverride('chrome')" class="bg-blue-600 hover:bg-blue-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs transition-all">
+            Switch to Chrome View
+          </button>
+          <button onclick="setBrowserOverride('edge')" class="bg-sky-600 hover:bg-sky-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs transition-all">
+            Switch to Edge View
+          </button>
+          <button onclick="setBrowserOverride('brave')" class="bg-orange-600 hover:bg-orange-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs transition-all">
+            Switch to Brave View
+          </button>
+          <button onclick="setBrowserOverride('firefox')" class="bg-amber-600 hover:bg-amber-500 text-white font-medium px-5 py-2.5 rounded-xl text-xs transition-all">
+            Switch to Firefox View
+          </button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- JAVASCRIPT BROWSER DETECTION LOGIC -->
+  <script>
+    // Global Application State
+    let state = {
+      detectedBrowser: null, // 'chrome', 'edge', 'brave', 'firefox', 'other'
+      browserVersion: '',
+      userAgent: '',
+      overrideMode: 'auto',  // 'auto', 'chrome', 'edge', 'brave', 'firefox', 'other'
+      isLoading: true
+    };
+
+    // DOM Views Map
+    const views = {
+      loading: document.getElementById('view-loading'),
+      chrome: document.getElementById('view-chrome'),
+      edge: document.getElementById('view-edge'),
+      brave: document.getElementById('view-brave'),
+      firefox: document.getElementById('view-firefox'),
+      other: document.getElementById('view-other')
+    };
+
+    /**
+     * Primary Browser Detection Function
+     */
+    async function detectBrowser(forceRefresh = false) {
+      if (forceRefresh) {
+        showView('loading');
+      }
+
+      state.isLoading = true;
+      state.userAgent = navigator.userAgent;
+
+      const ua = navigator.userAgent;
+      let browser = 'other';
+      let version = '';
+
+      // 1. Check for Brave Browser (Uses navigator.brave API)
+      if (navigator.brave && typeof navigator.brave.isBrave === 'function') {
+        try {
+          const isBraveFlag = await navigator.brave.isBrave();
+          if (isBraveFlag) {
+            browser = 'brave';
+            const match = ua.match(/Chrome\/([0-9.]+)/);
+            version = match ? match[1] : 'Latest';
+          }
+        } catch (e) {
+          console.warn('Brave detection error', e);
+        }
+      }
+
+      // 2. Check for Microsoft Edge (Edg/)
+      if (browser === 'other' && (ua.includes('Edg/') || ua.includes('Edge/'))) {
+        browser = 'edge';
+        const match = ua.match(/Edg\/([0-9.]+)/) || ua.match(/Edge\/([0-9.]+)/);
+        version = match ? match[1] : '120.0';
+      }
+
+      // 3. Check for Firefox (Firefox/)
+      if (browser === 'other' && ua.includes('Firefox')) {
+        browser = 'firefox';
+        const match = ua.match(/Firefox\/([0-9.]+)/);
+        version = match ? match[1] : '120.0';
+      }
+
+      // 4. Check for Google Chrome (Chrome/ - must exclude Edge & Opera)
+      if (browser === 'other' && ua.includes('Chrome') && !ua.includes('OPR/') && !ua.includes('Edg/')) {
+        browser = 'chrome';
+        const match = ua.match(/Chrome\/([0-9.]+)/);
+        version = match ? match[1] : '120.0';
+      }
+
+      // 5. Fallback/Safari Check
+      if (browser === 'other' && ua.includes('Safari') && !ua.includes('Chrome')) {
+        browser = 'other'; // Generic / Safari
+        const match = ua.match(/Version\/([0-9.]+)/);
+        version = match ? `Safari ${match[1]}` : 'Safari / Generic';
+      }
+
+      state.detectedBrowser = browser;
+      state.browserVersion = version;
+      state.isLoading = false;
+
+      renderActiveView();
+    }
+
+    /**
+     * Render the active UI view based on detection or override
+     */
+    function renderActiveView() {
+      let activeTarget = state.detectedBrowser;
+
+      // Apply developer toolbar override if active
+      if (state.overrideMode !== 'auto') {
+        activeTarget = state.overrideMode;
+      }
+
+      // Update version text elements across views
+      document.querySelectorAll('.chrome-version-txt').forEach(el => el.textContent = state.browserVersion || '120.0');
+      document.querySelectorAll('.edge-version-txt').forEach(el => el.textContent = state.browserVersion || '120.0');
+      document.querySelectorAll('.ff-version-txt').forEach(el => el.textContent = state.browserVersion || '120.0');
+      
+      const genericNameEl = document.getElementById('generic-browser-name');
+      const genericInlineEl = document.getElementById('generic-name-inline');
+      const genericUaEl = document.getElementById('generic-ua-display');
+      
+      if (genericNameEl) genericNameEl.textContent = state.browserVersion || 'Safari / Other Browser';
+      if (genericInlineEl) genericInlineEl.textContent = state.browserVersion || 'Safari / Other Browser';
+      if (genericUaEl) genericUaEl.textContent = state.userAgent;
+
+      // Switch active view container
+      showView(activeTarget);
+      updateToolbarUI();
+    }
+
+    /**
+     * Show target view container and hide others
+     */
+    function showView(targetKey) {
+      Object.keys(views).forEach(key => {
+        if (key === targetKey) {
+          views[key].classList.remove('hidden');
+          views[key].classList.add('animate-fade-in');
+        } else {
+          views[key].classList.add('hidden');
+          views[key].classList.remove('animate-fade-in');
+        }
+      });
+    }
+
+    /**
+     * Toolbar override mode switch handler
+     */
+    function setBrowserOverride(mode) {
+      state.overrideMode = mode;
+      renderActiveView();
+    }
+
+    /**
+     * Update bottom developer toolbar buttons active states
+     */
+    function updateToolbarUI() {
+      const buttons = {
+        auto: document.getElementById('btn-auto'),
+        chrome: document.getElementById('btn-chrome'),
+        edge: document.getElementById('btn-edge'),
+        brave: document.getElementById('btn-brave'),
+        firefox: document.getElementById('btn-firefox'),
+        other: document.getElementById('btn-other')
+      };
+
+      const activeClass = "bg-indigo-600 text-white shadow-sm font-bold";
+      const inactiveClass = "text-slate-400 hover:text-slate-100 hover:bg-slate-800 font-medium";
+
+      Object.keys(buttons).forEach(key => {
+        if (buttons[key]) {
+          buttons[key].className = `px-3 py-1 rounded-full font-medium text-xs transition-all duration-200 ${state.overrideMode === key ? activeClass : inactiveClass}`;
+        }
+      });
+    }
+
+    // Initialize application on window load
+    window.onload = function() {
+      detectBrowser();
+    };
+  </script>
+</body>
+</html>
